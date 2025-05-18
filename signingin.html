@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Style for the Time column */
+        #signinginPage td:last-child {
+            display: flex; /* Use flexbox to align content */
+            justify-content: space-between; /* Space out the timestamp and delete button */
+            align-items: center; /* Vertically align the content */
+            padding-right: 10px; /* Add some padding to the right */
+        }
+
+        /* Style for the delete button */
+        #signinginPage img[alt="Delete"] {
+            cursor: pointer; /* Make the cursor a pointer */
+            width: 20px; /* Adjust the size of the delete button */
+            height: 20px; /* Adjust the size of the delete button */
+            margin-left: 10px; /* Add spacing between the timestamp and the button */
+        }
+    </style>
+</head>
+<body id="signinginPage">
+    <!-- Top Navigation Bar -->
+    <div id="topBar">
+        <span id="pageTitle">Schoolola Admin Page</span>
+        <div id="userDropdown">
+            <button id="userButton">Tarneit ▼</button>
+            <div id="dropdownContent">
+                <a href="#" onclick="logout()">Log Out</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Side Menu -->
+    <div id="sideMenu">
+        <button class="menuButton" onclick="goToDashboard()">Dashboard</button>
+        <button class="menuButton" onclick="goToSignInSignOut()">Students</button>
+        <button class="menuButton" onclick="goToSignIn()">Sign In/Sign Out</button>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent">
+        <!-- Header for Sign In Records -->
+        <div id="signInHeader">
+            <h2>Sign In Records</h2>
+            <div id="signInHeaderRight">
+                <button id="downloadExcelBtn">
+                    <img src="download.png" alt="Download Excel" title="Download Excel">
+                </button>
+                <div id="calendarContainer">
+                    <label for="datePicker">Select Date:</label>
+                    <input type="date" id="datePicker">
+                </div>
+            </div>
+        </div>
+
+        <!-- Table for Signing In -->
+        <div style="position: relative;"> <!-- Add a wrapper to position the calendar -->
+            <table id="signInTable" class="signingTable" border="1">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Grade</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Rows will be dynamically added here -->
+                </tbody>
+            </table>
+        </div>
+
+        <br>
+
+        <!-- Table for Signing Out -->
+        <h2>Sign Out Records</h2>
+        <table id="signOutTable" class="signingTable" border="1">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Grade</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows will be dynamically added here -->
+            </tbody>
+        </table>
+
+    </div>
+
+    <!-- Firebase SDK Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
+        import { getDatabase, ref, get, onValue, remove } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBBzeRD9aIT7PSI3-JI-2jeyrcqLL6csh4",
+            authDomain: "schoololatest.firebaseapp.com",
+            databaseURL: "https://schoololatest-default-rtdb.firebaseio.com",
+            projectId: "schoololatest",
+            storageBucket: "schoololatest.appspot.com",
+            messagingSenderId: "359042307109",
+            appId: "1:359042307109:web:cd0d43223f1fc588bbdbcc",
+            measurementId: "G-V11YZN2F1Y"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        window.logout = () => {
+            sessionStorage.removeItem("isLoggedIn");
+            auth.signOut(); // Sign out from Firebase Auth
+            window.location.href = "mainpage.html"; // Redirect to mainpage.html after logout
+        };
+
+        window.goToDashboard = () => window.location.href = "admin.html";
+        window.goToSignInSignOut = () => window.location.href = "students.html";
+        window.goToSignIn = () => window.location.href = "signingin.html";
+
+        let allRecords = null;
+
+        function setupRealtimeListeners() {
+            const signInTableBody = document.querySelector("#signInTable tbody");
+            const signOutTableBody = document.querySelector("#signOutTable tbody");
+            const datePicker = document.getElementById("datePicker");
+
+            function renderTables(selectedDate) {
+                signInTableBody.innerHTML = "";
+                signOutTableBody.innerHTML = "";
+
+                if (!allRecords) return;
+
+                for (const grade in allRecords) {
+                    for (const name in allRecords[grade]) {
+                        const history = allRecords[grade][name].history || {};
+
+                        for (const recordId in history) {
+                            const record = history[recordId];
+
+                            // Get the record's date (prefer record.date, fallback to timestamp)
+                            let recordDate = record.date;
+                            if (!recordDate && record.timestamp) {
+                                const d = new Date(record.timestamp);
+                                if (!isNaN(d)) {
+                                    recordDate = d.getFullYear() + "-" +
+                                        String(d.getMonth() + 1).padStart(2, "0") + "-" +
+                                        String(d.getDate()).padStart(2, "0");
+                                }
+                            }
+
+                            // If a date is selected, only show records for that date
+                            if (selectedDate && recordDate !== selectedDate) continue;
+
+                            // Create table row and cells
+                            const row = document.createElement("tr");
+
+                            const nameCell = document.createElement("td");
+                            nameCell.textContent = name;
+
+                            const gradeCell = document.createElement("td");
+                            gradeCell.textContent = grade;
+
+                            const dateCell = document.createElement("td");
+                            dateCell.textContent = record.date || recordDate || "";
+
+                            const timeCell = document.createElement("td");
+                            timeCell.textContent = record.time || ""; // fallback to empty if not present
+
+                            // Create delete button
+                            const deleteButton = document.createElement("img");
+                            deleteButton.src = "delete.png";
+                            deleteButton.alt = "Delete";
+                            deleteButton.style.cursor = "pointer";
+                            deleteButton.style.width = "20px";
+                            deleteButton.style.height = "20px";
+                            deleteButton.style.marginLeft = "10px";
+                            deleteButton.addEventListener("click", () => {
+                                if (confirm(`Are you sure you want to delete this record for ${name}?`)) {
+                                    const recordRef = ref(db, `records/${grade}/${name}/history/${recordId}`);
+                                    remove(recordRef)
+                                        .then(() => {
+                                            alert("Record deleted successfully!");
+                                        })
+                                        .catch((error) => {
+                                            console.error("Error deleting record:", error);
+                                            alert("Failed to delete the record. Please try again.");
+                                        });
+                                }
+                            });
+                            timeCell.appendChild(deleteButton);
+
+                            // Append cells to row
+                            row.appendChild(nameCell);
+                            row.appendChild(gradeCell);
+                            row.appendChild(dateCell);
+                            row.appendChild(timeCell);
+
+                            if (record.action === "Sign In") {
+                                signInTableBody.appendChild(row);
+                            } else if (record.action === "Sign Out") {
+                                signOutTableBody.appendChild(row);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Listen for changes in the "records" node
+            const recordsRef = ref(db, "records");
+            onValue(recordsRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    allRecords = snapshot.val();
+                    renderTables(datePicker.value); // Render with current date filter
+                } else {
+                    allRecords = null;
+                    renderTables(datePicker.value);
+                }
+            }, (error) => {
+                console.error("Error listening to records:", error);
+                alert("Failed to listen for updates. Please try again.");
+            });
+
+            // Listen for date changes
+            datePicker.addEventListener("change", function () {
+                renderTables(this.value);
+            });
+        }
+
+        // Set the calendar to today's date by default
+        document.getElementById("datePicker").value = new Date().toISOString().slice(0, 10);
+
+        // Only allow access if authenticated
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                setupRealtimeListeners();
+
+                // Download button logic
+                document.getElementById("downloadExcelBtn").addEventListener("click", function () {
+                    const signInData = [["Name", "Grade", "Date", "Time"]];
+                    const signOutData = [["Name", "Grade", "Date", "Time"]];
+
+                    if (!allRecords) {
+                        alert("No data to export!");
+                        return;
+                    }
+
+                    for (const grade in allRecords) {
+                        for (const name in allRecords[grade]) {
+                            const history = allRecords[grade][name].history || {};
+                            for (const recordId in history) {
+                                const record = history[recordId];
+                                let recordDate = record.date;
+                                if (!recordDate && record.timestamp) {
+                                    const d = new Date(record.timestamp);
+                                    if (!isNaN(d)) {
+                                        recordDate = d.getFullYear() + "-" +
+                                            String(d.getMonth() + 1).padStart(2, "0") + "-" +
+                                            String(d.getDate()).padStart(2, "0");
+                                    }
+                                }
+                                const row = [
+                                    name,
+                                    grade,
+                                    record.date || recordDate || "",
+                                    record.time || ""
+                                ];
+                                if (record.action === "Sign In") {
+                                    signInData.push(row);
+                                } else if (record.action === "Sign Out") {
+                                    signOutData.push(row);
+                                }
+                            }
+                        }
+                    }
+
+                    const wb = window.XLSX.utils.book_new();
+                    const signInSheet = window.XLSX.utils.aoa_to_sheet(signInData);
+                    const signOutSheet = window.XLSX.utils.aoa_to_sheet(signOutData);
+                    window.XLSX.utils.book_append_sheet(wb, signInSheet, "Sign In Records");
+                    window.XLSX.utils.book_append_sheet(wb, signOutSheet, "Sign Out Records");
+                    const today = new Date().toISOString().slice(0, 10);
+                    window.XLSX.writeFile(wb, `${today}_SignIn_SignOut_Records.xlsx`);
+                });
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+    </script>
+
+    <!-- Include XLSX library for Excel export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</body>
+</html>

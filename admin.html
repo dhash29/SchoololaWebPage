@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <div id="topBar">
+        <span id="pageTitle">Schoolola Admin Page</span>
+        <div id="userDropdown">
+            <button id="userButton">Tarneit ▼</button>
+            <div id="dropdownContent">
+                <a href="#" onclick="logout()">Log Out</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Side Menu -->
+    <div id="sideMenu">
+        <button class="menuButton" onclick="goToDashboard()">Dashboard</button>
+        <button class="menuButton" onclick="goToSignInSignOut()">Students</button>
+        <button class="menuButton" onclick="goToSignIn()">Sign In/Sign Out</button>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent">
+        <h1>Welcome to the Admin Dashboard</h1>
+        <!-- Add your admin-specific content here -->
+    </div>
+
+    <!-- Firebase SDK Scripts -->
+    <script type="module">
+        // Redirect to login.html if the user is not logged in
+        if (!sessionStorage.getItem("isLoggedIn")) {
+            window.location.href = "login.html";
+        }
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
+        import { getDatabase } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBBzeRD9aIT7PSI3-JI-2jeyrcqLL6csh4",
+            authDomain: "schoololatest.firebaseapp.com",
+            databaseURL: "https://schoololatest-default-rtdb.firebaseio.com",
+            projectId: "schoololatest",
+            storageBucket: "schoololatest.appspot.com",
+            messagingSenderId: "359042307109",
+            appId: "1:359042307109:web:cd0d43223f1fc588bbdbcc",
+            measurementId: "G-V11YZN2F1Y"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        window.logout = () => {
+            sessionStorage.removeItem("isLoggedIn"); // Clear the login session
+            window.location.href = "index.html"; // Redirect to the index page
+        };
+
+        window.goToDashboard = () => window.location.href = "admin.html";
+        window.goToSignIn = () => window.location.href = "signingin.html";
+        window.goToSignInSignOut = () => window.location.href = "students.html";
+    </script>
+</body>
+</html>

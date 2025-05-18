@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Login</title>
+        <link rel="stylesheet" href="style.css">
+        <style>
+            /* Inline styles for simplicity */
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f4f4f9;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+            }
+            #loginContainer {
+                background: white;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                width: 300px;
+                text-align: center;
+            }
+            input {
+                width: 90%;
+                padding: 10px;
+                margin: 10px 0;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+            }
+            button {
+                width: 100%;
+                padding: 10px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+            button:hover {
+                background-color: #0056b3;
+            }
+            #errorMessage {
+                color: red;
+                font-size: 0.9em;
+                display: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="loginContainer">
+            <h2>Login</h2>
+            <input type="email" id="email" placeholder="Enter your email" required>
+            <input type="password" id="password" placeholder="Enter your password" required>
+            <button id="loginButton">Login</button>
+            <p id="errorMessage">Invalid username or password. Please try again.</p>
+            <p id="loadingMessage" style="color:#007bff; display:none;">Loading...</p>
+        </div>
+
+       <script type="module">
+    // Import Firebase modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
+    import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBBzeRD9aIT7PSI3-JI-2jeyrcqLL6csh4",
+        authDomain: "schoololatest.firebaseapp.com",
+        databaseURL: "https://schoololatest-default-rtdb.firebaseio.com",
+        projectId: "schoololatest",
+        storageBucket: "schoololatest.appspot.com",
+        messagingSenderId: "359042307109",
+        appId: "1:359042307109:web:cd0d43223f1fc588bbdbcc",
+        measurementId: "G-V11YZN2F1Y"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    document.getElementById("loginButton").addEventListener("click", async () => {
+        document.getElementById("errorMessage").style.display = "none";
+        document.getElementById("loadingMessage").style.display = "block";
+        document.getElementById("loginButton").style.display = "none"; // Hide the login button
+
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+
+        try {
+            const dbRef = ref(database);
+            const snapshot = await get(child(dbRef, "adminUsers"));
+
+            let found = false;
+            snapshot.forEach(childSnapshot => {
+                const user = childSnapshot.val();
+                if (user.email === email && user.password === password) {
+                    found = true;
+                }
+            });
+
+            if (found) {
+                sessionStorage.setItem("isLoggedIn", "true");
+                window.location.href = "admin.html";
+            } else {
+                document.getElementById("loadingMessage").style.display = "none";
+                document.getElementById("loginButton").style.display = "block"; // Show the login button again
+                document.getElementById("errorMessage").style.display = "block";
+            }
+        } catch (error) {
+            console.error(error);
+            document.getElementById("loadingMessage").style.display = "none";
+            document.getElementById("loginButton").style.display = "block"; // Show the login button again
+            document.getElementById("errorMessage").style.display = "block";
+        }
+    });
+
+    // Allow Enter key to submit login
+    document.getElementById("password").addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            document.getElementById("loginButton").click();
+        }
+    });
+    document.getElementById("email").addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            document.getElementById("loginButton").click();
+        }
+    });
+</script>
+    </body>
+</html>

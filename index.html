@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Schoolola Login</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background: #f6f8fa;
+            font-family: Arial, sans-serif;
+        }
+        .login-container {
+            max-width: 350px;
+            margin: 80px auto 0 auto;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+            padding: 32px 32px 24px 32px;
+            text-align: center;
+        }
+        .login-container h2 {
+            margin-bottom: 18px;
+            color: #007bff;
+        }
+        .login-container input[type="email"],
+        .login-container input[type="password"] {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0 18px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 15px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .login-container button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 22px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 80%;
+            margin-bottom: 8px;
+        }
+        .login-container button:hover {
+            background-color: #0056b3;
+        }
+        .login-container .loading {
+            margin: 10px 0;
+            color: #007bff;
+            display: none;
+        }
+        .login-container .error {
+            color: #d32f2f;
+            margin: 10px 0 0 0;
+            display: none;
+        }
+    </style>
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
+        import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-auth.js";
+
+        // Your Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyBBzeRD9aIT7PSI3-JI-2jeyrcqLL6csh4",
+            authDomain: "schoololatest.firebaseapp.com",
+            databaseURL: "https://schoololatest-default-rtdb.firebaseio.com",
+            projectId: "schoololatest",
+            storageBucket: "schoololatest.appspot.com",
+            messagingSenderId: "359042307109",
+            appId: "1:359042307109:web:cd0d43223f1fc588bbdbcc",
+            measurementId: "G-V11YZN2F1Y"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Login function
+        window.login = async function() {
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+            const errorMsg = document.getElementById("errorMessage");
+            const loadingMsg = document.getElementById("loadingMessage");
+            const loginBtn = document.getElementById("loginButton");
+
+            errorMsg.style.display = "none";
+            loadingMsg.style.display = "block";
+            loginBtn.style.display = "none";
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                window.location.href = "mainpage.html"; // Redirect only after successful login
+            } catch (error) {
+                loadingMsg.style.display = "none";
+                loginBtn.style.display = "block";
+                errorMsg.textContent = "Login failed. Please check your credentials.";
+                errorMsg.style.display = "block";
+            }
+        };
+
+        // Allow Enter key to submit login
+        window.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("password").addEventListener("keydown", function(event) {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    window.login();
+                }
+            });
+            document.getElementById("email").addEventListener("keydown", function(event) {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    window.login();
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Schoolola Login</h2>
+        <input type="email" id="email" placeholder="Email" autocomplete="username" required>
+        <input type="password" id="password" placeholder="Password" autocomplete="current-password" required>
+        <button id="loginButton" onclick="login()">Login</button>
+        <div id="loadingMessage" class="loading">Loading...</div>
+        <div id="errorMessage" class="error"></div>
+    </div>
+</body>
+</html>

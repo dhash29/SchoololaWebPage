@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Schoolola Sign In</title>
+        <link rel="stylesheet" href="style.css">
+        <!-- Add Firebase SDK -->
+
+        <script type="module" >
+            window.showForm = showForm;
+window.submitForm = submitForm;
+window.goBack = goBack;
+window.showAdminLogin = showAdminLogin;
+window.hideAdminLogin = hideAdminLogin;
+window.submitAdminLogin = submitAdminLogin;
+window.showAdminCodePrompt = showAdminCodePrompt;
+window.hideAdminCodePrompt = hideAdminCodePrompt;
+window.submitAdminCode = submitAdminCode;
+window.showSecondDropdown = showSecondDropdown;
+window.showGuestForm = showGuestForm;
+window.hideGuestForm = hideGuestForm;
+window.submitGuestForm = submitGuestForm;
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
+import { getDatabase, ref, push, get, child, set } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-database.js";
+
+// Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyBBzeRD9aIT7PSI3-JI-2jeyrcqLL6csh4",
+    authDomain: "schoololatest.firebaseapp.com",
+    databaseURL: "https://schoololatest-default-rtdb.firebaseio.com",
+    projectId: "schoololatest",
+    storageBucket: "schoololatest.firebasestorage.app",
+    messagingSenderId: "359042307109",
+    appId: "1:359042307109:web:cd0d43223f1fc588bbdbcc",
+    measurementId: "G-V11YZN2F1Y"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+
+// Fetch names from Firebase and display them
+function showSecondDropdown() {
+    const grade = document.getElementById("YrLevel").value; // Get the selected grade
+    const namesDropdown = document.getElementById("Names");
+    const secondDropdown = document.getElementById("secondDropdown");
+    const actionType = document.getElementById("actionType").value; // Get the action type (Sign In or Sign Out)
+
+    // Clear existing options and show "Loading..."
+    namesDropdown.innerHTML = '<option value="loading">Loading...</option>';
+    secondDropdown.style.display = "block";
+
+    console.log(`Fetching names for grade: ${grade} and action: ${actionType}`);
+
+    // Fetch names from Firebase
+    get(child(ref(database), `grades/${grade}/names`))
+        .then(snapshot => {
+            namesDropdown.innerHTML = '<option value="placeholder" selected disabled>Select your name</option>';
+            if (snapshot.exists()) {
+                const names = snapshot.val();
+
+                // Check each name's status in Firebase
+                const promises = names.map(entry => {
+                    const userStatusRef = ref(database, `records/${grade}/${entry.name}/status`);
+                    return get(userStatusRef).then(statusSnapshot => {
+                        const status = statusSnapshot.val();
+                        return { name: entry.name, status: status };
+                    });
+                });
+
+                // Wait for all status checks to complete
+                Promise.all(promises).then(results => {
+                    results.forEach(({ name, status }) => {
+                        if (actionType === "Sign In" && status !== "Signed In") {
+                            // Add names that are not signed in to the "Sign In" dropdown
+                            const option = document.createElement("option");
+                            option.value = name;
+                            option.textContent = name;
+                            namesDropdown.appendChild(option);
+                        } else if (actionType === "Sign Out" && status === "Signed In") {
+                            // Add names that are signed in to the "Sign Out" dropdown
+                            const option = document.createElement("option");
+                            option.value = name;
+                            option.textContent = name;
+                            namesDropdown.appendChild(option);
+                        }
+                    });
+
+                    // If no names are available for the selected action
+                    if (namesDropdown.children.length === 1) {
+                        const message =
+                            actionType === "Sign In"
+                                ? "No names available for signing in"
+                                : "No names available for signing out";
+                        namesDropdown.innerHTML = `<option value="none" disabled>${message}</option>`;
+                    }
+                });
+            } else {
+                namesDropdown.innerHTML = '<option value="none" disabled>No names available in this grade</option>';
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching names:", error);
+            alert("Failed to load names. Please try again.");
+        });
+}
+
+// Submit sign-in/sign-out data to Firebase
+function submitForm() {
+    const form = document.getElementById("signInForm");
+    const formData = new FormData(form);
+    const actionType = formData.get("actionType"); // Sign In or Sign Out
+    const grade = formData.get("YrLevel"); // Selected grade
+    const name = formData.get("Names"); // Selected name
+    const now = new Date();
+
+    if (!grade || !name) {
+        alert("Please select your grade and name.");
+        return;
+    }
+
+    // Reference to the user's status in Firebase
+    const userStatusRef = ref(database, `records/${grade}/${name}/status`);
+
+    // Check the user's current status
+    get(userStatusRef)
+        .then(snapshot => {
+            const currentStatus = snapshot.val();
+
+            if (actionType === "Sign In" && currentStatus === "Signed In") {
+                alert("You are already signed in. You cannot sign in again.");
+                return;
+            }
+
+            if (actionType === "Sign Out" && currentStatus !== "Signed In") {
+                alert("You cannot sign out because you haven't signed in yet.");
+                return;
+            }
+
+            // Format date and time separately
+            const date = now.getFullYear() + "-" +
+                String(now.getMonth() + 1).padStart(2, "0") + "-" +
+                String(now.getDate()).padStart(2, "0");
+            const time = now.toLocaleTimeString("en-AU", { hour12: false });
+
+            // Push the data to Firebase
+            const recordRef = ref(database, `records/${grade}/${name}/history`);
+            push(recordRef, {
+                action: actionType,
+                date: date,
+                time: time
+            })
+            .then(() => {
+                // Update the user's status in Firebase
+                set(userStatusRef, actionType === "Sign In" ? "Signed In" : "Signed Out")
+                    .then(() => {
+                        alert(`${actionType} recorded successfully at ${date} ${time}!`);
+
+                        // Reset the form and redirect to the start
+                        form.reset();
+                        document.getElementById("secondDropdown").style.display = "none";
+                        document.getElementById("formContainer").style.display = "none";
+                        document.getElementById("actionButtons").style.display = "block";
+                    });
+            })
+            .catch(error => {
+                console.error("Error saving data:", error);
+                alert("Failed to record data. Please try again.");
+            });
+        })
+        .catch(error => {
+            console.error("Error checking user status:", error);
+            alert("Failed to check user status. Please try again.");
+        });
+}
+
+function showForm(actionType) {
+    const formContainer = document.getElementById("formContainer");
+    const actionInput = document.getElementById("actionType");
+    actionInput.value = actionType; // Set the action type (Sign In or Sign Out)
+
+    // Show the form container
+    formContainer.style.display = "block";
+
+    // Hide the action buttons
+    document.getElementById("actionButtons").style.display = "none";
+}
+
+            function goBack() {
+                const formContainer = document.getElementById("formContainer");
+                const actionButtons = document.getElementById("actionButtons");
+                const form = document.getElementById("signInForm");
+                const namesDropdown = document.getElementById("Names");
+                const gradeDropdown = document.getElementById("YrLevel");
+
+                // Hide the form container
+                formContainer.style.display = "none";
+
+                // Show the action buttons
+                actionButtons.style.display = "block";
+
+                // Reset the form fields
+                form.reset();
+
+                // Reset the grade dropdown to its default state
+                gradeDropdown.selectedIndex = 0;
+
+                // Reset the names dropdown to its default state and hide it
+                namesDropdown.innerHTML = '<option value="placeholder" selected disabled>Select your name</option>';
+                document.getElementById("secondDropdown").style.display = "none";
+            }
+
+            function showAdminLogin() {
+                // Show the blurred background
+                const blurBackground = document.getElementById("blurBackground");
+                blurBackground.style.display = "block";
+
+                // Show the login form
+                const adminLoginContainer = document.getElementById("adminLoginContainer");
+                adminLoginContainer.style.display = "block";
+
+                // Disable interaction with the rest of the page
+                document.getElementById("actionButtons").style.pointerEvents = "none"; // Disable Sign In/Out buttons
+                document.getElementById("adminButtonContainer").style.pointerEvents = "none"; // Disable Admin Page button
+                blurBackground.style.pointerEvents = "auto"; // Allow interaction with the blur
+                adminLoginContainer.style.pointerEvents = "auto"; // Allow interaction with the login form
+
+                // Apply blur effect to the Admin Page button
+                document.getElementById("adminButtonContainer").classList.add("blurred");
+            }
+
+            function hideAdminLogin() {
+                // Hide the blurred background
+                const blurBackground = document.getElementById("blurBackground");
+                blurBackground.style.display = "none";
+
+                // Hide the login form
+                const adminLoginContainer = document.getElementById("adminLoginContainer");
+                adminLoginContainer.style.display = "none";
+
+                // Reset the email and password fields
+                document.getElementById("adminEmail").value = "";
+                document.getElementById("adminPassword").value = "";
+
+                // Re-enable interaction with the rest of the page
+                document.getElementById("actionButtons").style.pointerEvents = "auto"; // Re-enable Sign In/Out buttons
+                document.getElementById("adminButtonContainer").style.pointerEvents = "auto"; // Re-enable Admin Page button
+
+                // Remove blur effect from the Admin Page button
+                document.getElementById("adminButtonContainer").classList.remove("blurred");
+            }
+
+            function submitAdminLogin() {
+                const email = document.getElementById("adminEmail").value.trim();
+                const password = document.getElementById("adminPassword").value.trim();
+
+                // Check if either email or password is empty
+                if (!email || !password) {
+                    // Show the notification bar for missing details
+                    const notificationBar = document.getElementById("notificationBar");
+                    notificationBar.textContent = "Please insert your details.";
+                    notificationBar.style.display = "block";
+
+                    // Hide the notification bar after 3 seconds
+                    setTimeout(() => {
+                        notificationBar.style.display = "none";
+                    }, 3000);
+
+                    return; // Stop further execution
+                }
+
+                // Simple validation (replace with actual authentication logic)
+                if (email === "Tarneit@schoololatutoring.com.au" && password === "Paramount123456") {
+                    hideAdminLogin();
+                    // Redirect to the admin page
+                    window.location.href = "admin.html";
+                } else {
+                    // Show the notification bar for incorrect login
+                    const notificationBar = document.getElementById("notificationBar");
+                    notificationBar.textContent = "Incorrect login. Please try again.";
+                    notificationBar.style.display = "block";
+
+                    // Reset the email and password fields
+                    document.getElementById("adminLoginForm").reset();
+
+                    // Hide the notification bar after 3 seconds
+                    setTimeout(() => {
+                        notificationBar.style.display = "none";
+                    }, 3000);
+                }
+            }
+
+            function showAdminCodePrompt() {
+                // Show the blurred background
+                const blurBackground = document.getElementById("blurBackground");
+                blurBackground.style.display = "block";
+
+                // Show the code prompt container
+                const adminCodeContainer = document.getElementById("adminCodeContainer");
+                adminCodeContainer.style.display = "block";
+
+                // Disable interaction with the rest of the page
+                document.getElementById("actionButtons").style.pointerEvents = "none"; // Disable Sign In/Out buttons
+                document.getElementById("adminButtonContainer").style.pointerEvents = "none"; // Disable Admin Page button
+                blurBackground.style.pointerEvents = "auto"; // Allow interaction with the blur
+                adminCodeContainer.style.pointerEvents = "auto"; // Allow interaction with the code prompt
+            }
+
+            function hideAdminCodePrompt() {
+                // Hide the blurred background
+                const blurBackground = document.getElementById("blurBackground");
+                blurBackground.style.display = "none";
+
+                // Hide the code prompt container
+                const adminCodeContainer = document.getElementById("adminCodeContainer");
+                adminCodeContainer.style.display = "none";
+
+                // Reset the code input field
+                document.getElementById("adminCode").value = "";
+
+                // Re-enable interaction with the rest of the page
+                document.getElementById("actionButtons").style.pointerEvents = "auto"; // Re-enable Sign In/Out buttons
+                document.getElementById("adminButtonContainer").style.pointerEvents = "auto"; // Re-enable Admin Page button
+            }
+
+            function submitAdminCode() {
+                const code = document.getElementById("adminCode").value.trim();
+                const errorMessage = document.getElementById("adminCodeError");
+
+                // Check if the code is correct
+                if (code === "6187") { // Replace "123456" with your desired code
+                    hideAdminCodePrompt();
+                    // Redirect to the admin page
+                    window.location.href = "login.html";
+                } else {
+                    // Show an error message for incorrect code
+                    errorMessage.textContent = "Incorrect code. Please try again.";
+                    errorMessage.style.display = "block";
+
+                    // Clear the code input field
+                    document.getElementById("adminCode").value = "";
+
+                    // Hide the error message after 3 seconds
+                    setTimeout(() => {
+                        errorMessage.style.display = "none";
+                    }, 3000);
+                }
+            }
+
+            // Allow Enter key to submit the admin code
+document.getElementById("adminCode").addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+        event.preventDefault(); // Prevent form submission if inside a form
+        submitAdminCode();
+    }
+});
+
+function showGuestForm() {
+    document.getElementById("guestFormContainer").style.display = "block";
+    document.getElementById("actionButtons").style.display = "none";
+    document.getElementById("formContainer").style.display = "none";
+}
+
+function hideGuestForm() {
+    document.getElementById("guestFormContainer").style.display = "none";
+    document.getElementById("actionButtons").style.display = "block";
+}
+
+function submitGuestForm() {
+    const guestAction = document.getElementById("guestAction").value;
+    const guestGrade = document.getElementById("guestGrade").value;
+    const guestName = document.getElementById("guestName").value.trim();
+
+    if (!guestAction || !guestGrade || !guestName) {
+        alert("Please fill in all fields.");
+        return;
+    }
+
+    const now = new Date();
+    const date = now.getFullYear() + "-" +
+        String(now.getMonth() + 1).padStart(2, "0") + "-" +
+        String(now.getDate()).padStart(2, "0");
+    const time = now.toLocaleTimeString("en-AU", { hour12: false });
+
+    const recordRef = ref(database, `records/${guestGrade}/${guestName}/history`);
+    push(recordRef, {
+        action: guestAction,
+        date: date,
+        time: time
+    })
+    .then(() => {
+        const userStatusRef = ref(database, `records/${guestGrade}/${guestName}/status`);
+        set(userStatusRef, guestAction === "Sign In" ? "Signed In" : "Signed Out")
+            .then(() => {
+                alert(`${guestAction} recorded successfully as a guest at ${date} ${time}!`);
+                document.getElementById("guestFormContainer").style.display = "none";
+                document.getElementById("actionButtons").style.display = "block";
+            });
+    })
+    .catch(error => {
+        console.error("Error saving guest data:", error);
+        alert("Failed to record guest data. Please try again.");
+    });
+}
+
+// Make guest functions available globally for HTML onclick
+window.showGuestForm = showGuestForm;
+window.hideGuestForm = hideGuestForm;
+window.submitGuestForm = submitGuestForm;
+        </script>
+        <script>
+            // Log the user out when they visit index.html
+            window.onload = function () {
+                localStorage.removeItem("isLoggedIn");
+            };
+        </script>
+    </head>
+    <body>
+        <!-- Admin Page Button -->
+        <div id="adminButtonContainer" style="text-align: right; margin: 10px;">
+            <button id="adminButton" type="button" onclick="showAdminCodePrompt()">Admin Page</button>
+        </div>
+
+        <!-- Blurred Background -->
+        <div id="blurBackground" style="display: none;"></div>
+
+        <!-- Admin Login Form -->
+        <div id="adminLoginContainer">
+            <!-- Notification Bar -->
+            <div id="notificationBar" style="display: none;">Incorrect login. Please try again.</div>
+
+            <!-- Logo -->
+            <img src="logo.png" alt="Logo" id="loginLogo">
+            <form id="adminLoginForm">
+                <h3>Admin Login</h3>
+                <label for="adminEmail">Email:</label>
+                <input type="email" id="adminEmail" name="adminEmail" placeholder="Enter email" required>
+                <br><br>
+                <label for="adminPassword">Password:</label>
+                <input type="password" id="adminPassword" name="adminPassword" placeholder="Enter password" required>
+                <br><br>
+                <button type="button" onclick="submitAdminLogin()">Login</button>
+                <button type="button" onclick="hideAdminLogin()" id="goBackButton">Go Back</button>
+            </form>
+        </div>
+
+        <!-- Admin Code Prompt -->
+        <div id="adminCodeContainer" style="display: none; text-align: center; padding: 20px; background-color: white; border-radius: 10px; width: 300px; margin: auto; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1001;">
+            <!-- Error Message -->
+            <p id="adminCodeError" style="display: none; color: red; font-weight: bold; margin-bottom: 10px;"></p>
+
+            <h3>Enter Admin Code</h3>
+            <input type="password" id="adminCode" placeholder="Enter code" style="padding: 10px; width: 80%; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 5px;">
+            <br>
+            <button type="button" onclick="submitAdminCode()" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">Submit</button>
+            <button type="button" onclick="hideAdminCodePrompt()" style="padding: 10px 20px; background-color: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer;">Cancel</button>
+        </div>
+
+        <!-- Action Buttons -->
+        <div id="actionButtons" style="text-align: center;">
+    <div>
+        <button onclick="showForm('Sign In')">Sign In</button>
+        <button onclick="showForm('Sign Out')">Sign Out</button>
+    </div>
+    <div style="margin-top: 18px;">
+        <button id="guestBtn" onclick="showGuestForm()">Guest</button>
+    </div>
+</div>
+
+        <div id="formContainer" style="display: none;">
+            <!-- Logo -->
+            <img src="logo.png" alt="Logo" id="formLogo">
+            <form id="signInForm" action="#" method="POST">
+                <input type="hidden" id="actionType" name="actionType" value="">
+
+                <label for="YrLevel">Select your grade:</label>
+                <select id="YrLevel" name="YrLevel" onchange="showSecondDropdown()">
+                    <option value="placeholder" selected disabled>Select your grade</option>
+                    <option value="Prep">Prep</option>
+                    <option value="Grade 1">Grade 1</option>
+                    <option value="Grade 2">Grade 2</option>
+                    <option value="Grade 3">Grade 3</option>
+                    <option value="Grade 4">Grade 4</option>
+                    <option value="Grade 5">Grade 5</option>
+                    <option value="Grade 6">Grade 6</option>
+                </select>
+
+                <br><br>
+
+                <div id="secondDropdown" style="display: none;">
+                    <label for="Names">Select your name:</label>
+                    <select id="Names" name="Names">
+                        <option value="placeholder" selected disabled>Select your name</option>
+                    </select>
+                </div>
+            </form>
+
+            <br><br>
+
+            <!-- Loading Message -->
+            <div id="loadingMessage" style="display: none; text-align: center; color: blue; font-weight: bold;">
+                Please wait until it has been submitted...
+            </div>
+
+            <!-- Submit Button -->
+            <div id="buttonContainer">
+                <button id="goBackButton" type="button" onclick="goBack()">Go Back</button>
+                <button id="submitButton" type="button" onclick="submitForm()">Submit</button>
+            </div>
+        </div>
+
+        <!-- Guest Form -->
+        <div id="guestFormContainer" style="display: none;">
+  <div class="formContainer">
+    <img src="logo.png" alt="Logo">
+    <h3>Guest Sign In/Out</h3>
+    <label for="guestAction">What are you doing?</label>
+    <select id="guestAction">
+      <option value="" selected disabled>Select action</option>
+      <option value="Sign In">Signing In</option>
+      <option value="Sign Out">Signing Out</option>
+    </select>
+    <label for="guestGrade">Select your grade:</label>
+    <select id="guestGrade">
+      <option value="" selected disabled>Select your grade</option>
+      <option value="Prep">Prep</option>
+      <option value="Grade 1">Grade 1</option>
+      <option value="Grade 2">Grade 2</option>
+      <option value="Grade 3">Grade 3</option>
+      <option value="Grade 4">Grade 4</option>
+      <option value="Grade 5">Grade 5</option>
+      <option value="Grade 6">Grade 6</option>
+    </select>
+    <label for="guestName">Enter your name:</label>
+    <input type="text" id="guestName" placeholder="Type your name">
+    <button type="button" onclick="submitGuestForm()" class="primaryBtn">Submit</button>
+    <button type="button" onclick="hideGuestForm()" class="secondaryBtn">Go Back</button>
+  </div>
+</div>
+    </body>
+</html>

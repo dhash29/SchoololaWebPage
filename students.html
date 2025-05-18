@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>All Students</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <div id="topBar">
+        <span id="pageTitle">Schoolola Admin Page</span>
+        <div id="userDropdown">
+            <button id="userButton">Tarneit ▼</button>
+            <div id="dropdownContent">
+                <a href="#" onclick="logout()">Log Out</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Side Menu -->
+    <div id="sideMenu">
+        <button class="menuButton" onclick="goToDashboard()">Dashboard</button>
+        <button class="menuButton" onclick="goToSignInSignOut()">Students</button>
+        <button class="menuButton" onclick="goToSignIn()">Sign In/Sign Out</button>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent">
+        <h1>All Names, Grades, Phone Numbers, and Emails</h1>
+        <div id="actionContainer">
+            <div id="filterAndAddContainer">
+                <button id="uploadExcelBtn" title="Upload Excel" style="background:none; border:none; cursor:pointer; margin-right:8px;">
+                    <img src="upload.png" alt="Upload Excel" style="width:24px; height:24px;">
+                </button>
+                <input type="file" id="uploadExcelInput" accept=".xlsx,.xls" style="display:none;">
+                <button id="downloadExcelBtn" title="Download Excel" style="background:none; border:none; cursor:pointer; margin-right:8px;">
+                    <img src="download.png" alt="Download Excel" style="width:24px; height:24px;">
+                </button>
+                <select id="filterDropdown" class="filter-dropdown">
+                    <option value="all" selected>All Grades</option>
+                    <option value="Prep">Prep</option>
+                    <option value="Grade 1">Grade 1</option>
+                    <option value="Grade 2">Grade 2</option>
+                    <option value="Grade 3">Grade 3</option>
+                    <option value="Grade 4">Grade 4</option>
+                    <option value="Grade 5">Grade 5</option>
+                    <option value="Grade 6">Grade 6</option>
+                </select>
+                <input type="text" id="searchBar" placeholder="Search by name" />
+                <button id="addStudentButton">Add Student</button>
+            </div>
+        </div>
+        <table id="dataTable" border="1">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Grade</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Data will be dynamically inserted here -->
+            </tbody>
+        </table>
+
+        <!-- Add Student Modal -->
+        <div id="addStudentModal" class="hidden">
+            <div id="modalContent">
+                <h2>Add Student</h2>
+                <label for="gradeSelect">Grade:</label>
+                <select id="gradeSelect">
+                    <option value="Prep">Prep</option>
+                    <option value="Grade 1">Grade 1</option>
+                    <option value="Grade 2">Grade 2</option>
+                    <option value="Grade 3">Grade 3</option>
+                    <option value="Grade 4">Grade 4</option>
+                    <option value="Grade 5">Grade 5</option>
+                    <option value="Grade 6">Grade 6</option>
+                </select>
+                <label for="studentName">Name:</label>
+                <input type="text" id="studentName" placeholder="Enter student name" />
+                <label for="studentEmail">Email:</label>
+                <input type="email" id="studentEmail" placeholder="Enter student email" />
+                <label for="studentPhone">Phone:</label>
+                <input type="text" id="studentPhone" placeholder="Enter student phone number" />
+                <label for="parentName">Parent/Guardian Name:</label>
+                <input type="text" id="parentName" placeholder="Enter parent/guardian name" />
+                <div id="modalButtons">
+                    <button id="saveStudentButton">Save</button>
+                    <button id="cancelStudentButton">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Box Modal -->
+        <div id="infoBoxModal" class="hidden">
+            <div id="infoBoxContent">
+                <h2>Student Information</h2>
+                <p id="infoName"></p>
+                <p id="infoEmail"></p>
+                <p id="infoPhone"></p>
+                <p id="infoGrade"></p>
+                <p id="infoParent"></p>
+                <button id="closeInfoBoxButton">Close</button>
+            </div>
+        </div>
+
+    <!-- Firebase SDK Scripts -->
+    <script type="module">
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
+        import { getDatabase, ref, get, child, remove, set } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBBzeRD9aIT7PSI3-JI-2jeyrcqLL6csh4",
+            authDomain: "schoololatest.firebaseapp.com",
+            databaseURL: "https://schoololatest-default-rtdb.firebaseio.com",
+            projectId: "schoololatest",
+            storageBucket: "schoololatest.appspot.com",
+            messagingSenderId: "359042307109",
+            appId: "1:359042307109:web:cd0d43223f1fc588bbdbcc",
+            measurementId: "G-V11YZN2F1Y"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        window.logout = () => {
+            sessionStorage.removeItem("isLoggedIn"); // Clear the login session
+            window.location.href = "index.html"; // Redirect to the index page
+        };
+
+        window.goToDashboard = () => window.location.href = "admin.html";
+        window.goToSignIn = () => window.location.href = "signingin.html";
+        window.goToSignInSignOut = () => window.location.href = "students.html";
+
+        async function fetchAllNamesAndGrades() {
+            const dbRef = ref(db);
+
+            try {
+                const snapshot = await get(child(dbRef, "grades"));
+                const data = snapshot.val();
+
+                if (data) {
+                    const tableBody = document.querySelector("#dataTable tbody");
+                    tableBody.innerHTML = "";
+
+                    Object.keys(data).forEach(grade => {
+                        const names = data[grade].names;
+                        if (Array.isArray(names)) {
+                            names.forEach((entry, index) => {
+                                // Ensure entry is always an object
+                                if (typeof entry !== 'object') {
+                                    entry = { name: entry, phone: "-", email: "-", parentName: "-" };
+                                }
+                                const row = document.createElement("tr");
+                                const name = entry.name || "-";
+                                const phone = entry.phone || "-";
+                                const email = entry.email || "-";
+
+                                row.innerHTML = `
+                                    <td>${name}</td>
+                                    <td>${grade}</td>
+                                    <td>${phone}</td>
+                                    <td style="position: relative;">
+                                        ${email}
+                                        <img src="delete.png" alt="Delete" class="delete-icon" data-grade="${grade}" data-index="${index}" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer;" />
+                                    </td>
+                                `;
+
+                                // Attach delete event
+                                row.querySelector(".delete-icon").addEventListener("click", (event) => {
+                                    event.stopPropagation();
+                                    handleDelete(event);
+                                });
+
+                                // Row click for info modal
+                                row.addEventListener("click", (event) => {
+                                    if (!event.target.classList.contains("delete-icon")) {
+                                        handleViewStudentInfo(name, grade, phone, email, entry.parentName || "-");
+                                    }
+                                });
+
+                                tableBody.appendChild(row);
+                            });
+                        }
+                    });
+                } else {
+                    console.log("No data available.");
+                }
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        }
+
+        function handleDelete(event) {
+            const gradeToDelete = event.target.getAttribute("data-grade");
+            const indexToDelete = event.target.getAttribute("data-index");
+
+            // Show a confirmation alert
+            const confirmDelete = confirm("Are you sure you want to delete this student?");
+            if (confirmDelete) {
+                const nameRef = ref(db, `grades/${gradeToDelete}/names/${indexToDelete}`);
+                remove(nameRef)
+                    .then(() => {
+                        alert("Entry deleted successfully.");
+                        fetchAllNamesAndGrades();
+                    })
+                    .catch(error => {
+                        console.error("Error deleting entry:", error);
+                        alert("Failed to delete the entry. Please try again.");
+                    });
+            }
+        }
+
+        // Save the Student Data
+        document.getElementById("saveStudentButton").addEventListener("click", async () => {
+            const grade = document.getElementById("gradeSelect").value;
+            const name = document.getElementById("studentName").value;
+            const email = document.getElementById("studentEmail").value;
+            const phone = document.getElementById("studentPhone").value;
+            const parentName = document.getElementById("parentName").value;
+
+            if (!grade || !name || !email || !phone || !parentName) {
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            try {
+                const newStudent = { name, email, phone, parentName };
+                const gradeRef = ref(db, `grades/${grade}/names`);
+                const snapshot = await get(gradeRef);
+
+                let students = snapshot.val() || [];
+                students.push(newStudent);
+
+                await set(gradeRef, students);
+                alert("Student added successfully!");
+                resetAddStudentForm(); // Reset the form
+                document.getElementById("addStudentModal").classList.add("hidden");
+                fetchAllNamesAndGrades(); // Refresh the table
+            } catch (error) {
+                console.error("Error adding student:", error);
+                alert("Failed to add student. Please try again.");
+            }
+        });
+
+        function handleViewStudentInfo(name, grade, phone, email, parentName) {
+            document.getElementById("infoName").textContent = "Name: " + name;
+            document.getElementById("infoGrade").textContent = "Grade: " + grade;
+            document.getElementById("infoPhone").textContent = "Phone: " + phone;
+            document.getElementById("infoEmail").textContent = "Email: " + email;
+            document.getElementById("infoParent").textContent = "Parent/Guardian: " + (parentName || "-");
+            document.getElementById("infoBoxModal").classList.remove("hidden");
+        }
+
+        // Filter by Grade
+        document.getElementById("filterDropdown").addEventListener("change", () => {
+            const selectedGrade = document.getElementById("filterDropdown").value.toLowerCase();
+            const tableBody = document.querySelector("#dataTable tbody");
+
+            // Fetch all rows in the table
+            const rows = tableBody.querySelectorAll("tr");
+
+            rows.forEach(row => {
+                const gradeCell = row.querySelector("td:nth-child(2)"); // Grade is in the 2nd column
+                if (selectedGrade === "all" || gradeCell.textContent.toLowerCase() === selectedGrade) {
+                    row.style.display = ""; // Show the row
+                } else {
+                    row.style.display = "none"; // Hide the row
+                }
+            });
+        });
+
+        // Search by Name within the Selected Grade
+        document.getElementById("searchBar").addEventListener("input", () => {
+            const searchQuery = document.getElementById("searchBar").value.toLowerCase();
+            const selectedGrade = document.getElementById("filterDropdown").value.toLowerCase();
+            const tableBody = document.querySelector("#dataTable tbody");
+
+            // Fetch all rows in the table
+            const rows = tableBody.querySelectorAll("tr");
+
+            rows.forEach(row => {
+                const nameCell = row.querySelector("td:nth-child(1)"); // Name is in the 1st column
+                const gradeCell = row.querySelector("td:nth-child(2)"); // Grade is in the 2nd column
+
+                const matchesSearch = nameCell.textContent.toLowerCase().includes(searchQuery);
+                const matchesGrade = selectedGrade === "all" || gradeCell.textContent.toLowerCase() === selectedGrade;
+
+                // Show the row only if it matches both the search query and the selected grade
+                if (matchesSearch && matchesGrade) {
+                    row.style.display = ""; // Show the row
+                } else {
+                    row.style.display = "none"; // Hide the row
+                }
+            });
+        });
+
+        // Close the Info Box Modal
+        document.getElementById("closeInfoBoxButton").addEventListener("click", function() {
+            document.getElementById("infoBoxModal").classList.add("hidden");
+        });
+
+        // Show the Add Student Modal
+        document.getElementById("addStudentButton").addEventListener("click", function() {
+            document.getElementById("addStudentModal").classList.remove("hidden");
+        });
+
+        // Hide the Add Student Modal when Cancel is clicked
+        document.getElementById("cancelStudentButton").addEventListener("click", function() {
+            document.getElementById("addStudentModal").classList.add("hidden");
+        });
+
+        // Optional: Reset the form fields when opening the modal
+        function resetAddStudentForm() {
+            document.getElementById("gradeSelect").value = "Prep";
+            document.getElementById("studentName").value = "";
+            document.getElementById("studentEmail").value = "";
+            document.getElementById("studentPhone").value = "";
+            document.getElementById("parentName").value = "";
+        }
+
+        document.getElementById("downloadExcelBtn").addEventListener("click", async function() {
+            // Fetch latest data from Firebase
+            const dbRef = ref(db);
+            const snapshot = await get(child(dbRef, "grades"));
+            const data = snapshot.val();
+
+            // Prepare array for export
+            const exportRows = [];
+            exportRows.push(["Name", "Grade", "Phone", "Email", "Parent/Guardian"]);
+            if (data) {
+                Object.keys(data).forEach(grade => {
+                    const names = data[grade].names;
+                    if (Array.isArray(names)) {
+                        names.forEach(entry => {
+                            if (typeof entry !== 'object') entry = { name: entry, phone: "-", email: "-", parentName: "-" };
+                            exportRows.push([
+                                entry.name || "-",
+                                grade,
+                                entry.phone || "-",
+                                entry.email || "-",
+                                entry.parentName || "-"
+                            ]);
+                        });
+                    }
+                });
+            }
+
+            // Create worksheet and download
+            const ws = XLSX.utils.aoa_to_sheet(exportRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Students");
+            const today = new Date().toISOString().slice(0, 10);
+            XLSX.writeFile(wb, `${today}_Students.xlsx`);
+        });
+
+        // Trigger file input when upload button is clicked
+        document.getElementById("uploadExcelBtn").addEventListener("click", function() {
+            document.getElementById("uploadExcelInput").click();
+        });
+
+        // Handle file upload and replace all student data
+        document.getElementById("uploadExcelInput").addEventListener("change", async function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: "array" });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const rows = XLSX.utils.sheet_to_json(sheet);
+
+                // Confirm before deleting all data
+                if (!confirm("This will delete ALL existing students and replace them with the uploaded spreadsheet. Continue?")) {
+                    document.getElementById("uploadExcelInput").value = "";
+                    return;
+                }
+
+                // Prepare new data structure
+                const newGrades = {};
+                rows.forEach(row => {
+                    const grade = row.Grade || row.grade || "-";
+                    if (!newGrades[grade]) newGrades[grade] = { names: [] };
+                    newGrades[grade].names.push({
+                        name: row.Name || row.name || "-",
+                        phone: row.Phone || row.phone || "-",
+                        email: row.Email || row.email || "-",
+                        parentName: row["Parent/Guardian"] || row.parentName || row["Parent"] || "-"
+                    });
+                });
+
+                // Replace all data in Firebase
+                try {
+                    await set(ref(db, "grades"), newGrades);
+                    alert("Student data replaced successfully!");
+                    fetchAllNamesAndGrades();
+                } catch (error) {
+                    alert("Failed to upload data.");
+                    console.error(error);
+                }
+                // Reset file input so the same file can be uploaded again
+                document.getElementById("uploadExcelInput").value = "";
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User is signed in, safe to access database
+                fetchAllNamesAndGrades();
+            } else {
+                // Not signed in, redirect to login
+                window.location.href = "login.html";
+            }
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</body>
+</html>
+
+

@@ -1,0 +1,1064 @@
+/* Center the form on the page */
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Hide the form container initially */
+#formContainer {
+    display: none; /* Ensure it's hidden initially */
+}
+
+/* Show the second dropdown */
+#secondDropdown {
+    display: none;
+}
+
+/* Style the dropdowns */
+select {
+    width: 300px;
+    height: 50px;
+    font-size: 18px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    text-align: center;
+}
+
+/* Style the labels */
+label {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: center;
+    display: block;
+}
+
+/* Style the submit button */
+button {
+    width: 300px;
+    height: 50px;
+    font-size: 18px;
+    color: #fff;
+    background-color: #007bff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+/* Center the action buttons */
+#actionButtons {
+    text-align: center;
+    margin-top: 20px; /* Space between the buttons and other elements */
+}
+
+/* Style the Go Back button on the login page */
+#goBackButton {
+    background-color: #6c757d; /* Gray color */
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    margin: 5px;
+}
+
+#goBackButton:hover {
+    background-color: #5a6268; /* Darker gray on hover */
+}
+
+/* Style the loading message */
+#loadingMessage {
+    display: none; /* Initially hidden */
+    text-align: center;
+    color: #007bff; /* Blue color for the text */
+    font-weight: bold;
+    font-size: 18px; /* Slightly larger font size */
+    margin-top: 20px; /* Add spacing above the message */
+    background-color: #f8f9fa; /* Light gray background for contrast */
+    padding: 10px; /* Add padding around the text */
+    border: 1px solid #007bff; /* Add a blue border */
+    border-radius: 5px; /* Rounded corners */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+/* Style the Admin Page button */
+#adminButtonContainer {
+    position: absolute; /* Position it relative to the page */
+    top: 10px; /* Distance from the top of the page */
+    right: 10px; /* Distance from the right of the page */
+    z-index: 1000; /* Ensure it appears above other elements */
+}
+
+#adminButton {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 3px 10px; /* Further reduce padding for a smaller button */
+    font-size: 10px; /* Smaller font size */
+    cursor: pointer;
+    width: auto; /* Ensure the button width adjusts to its content */
+}
+
+#adminButton:hover {
+    background-color: #0056b3;
+}
+
+/* Apply blur effect to the Admin Page button */
+.blurred {
+    filter: blur(5px); /* Apply blur effect */
+    pointer-events: none; /* Disable interaction */
+}
+
+/* Style the blurred background */
+#blurBackground {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+    backdrop-filter: blur(5px); /* Apply blur effect */
+    z-index: 999; /* Ensure it appears above other elements */
+    pointer-events: none; /* Prevent interaction with the background */
+}
+
+/* Style the Admin Login Form */
+#adminLoginContainer {
+    position: fixed; /* Ensure the container is positioned relative to the viewport */
+    bottom: 50%; /* Position it in the middle of the screen */
+    left: 50%;
+    transform: translate(-50%, 50%);
+    width: 300px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border: 1px solid #007bff;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1000; /* Ensure it appears above the blurred background */
+    display: none; /* Initially hidden */
+}
+
+/* Style the Admin Login Form inputs */
+#adminLoginForm input {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+/* Style the Admin Login Form buttons */
+#adminLoginForm button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    margin: 5px;
+}
+
+#adminLoginForm button:hover {
+    background-color: #0056b3;
+}
+
+/* Style the Close Button */
+
+/* Style the logo above the login form */
+#loginLogo {
+    display: block;
+    margin: 0 auto 20px auto; /* Center the logo and add spacing below it */
+    max-width: 100px; /* Adjust the size of the logo */
+    height: auto; /* Maintain aspect ratio */
+}
+
+/* Style the logo above the Sign In/Out form */
+#formLogo {
+    display: block;
+    margin: 0 auto 20px auto; /* Center the logo and add spacing below it */
+    max-width: 100px; /* Adjust the size of the logo */
+    height: auto; /* Maintain aspect ratio */
+}
+
+/* Style the top navigation bar */
+#topBar {
+    background-color: #007bff; /* Blue background */
+    color: white; /* White text */
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between; /* Space between title and dropdown */
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+/* Style the page title */
+#pageTitle {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* Style the user dropdown container */
+#userDropdown {
+    position: relative;
+    display: inline-block;
+    margin-right: 20px; /* Move the dropdown further to the right */
+}
+
+/* Style the dropdown button */
+#userButton {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px; /* Match the padding of the dropdown links */
+    font-size: 14px; /* Match the font size of the dropdown links */
+    cursor: pointer;
+    transition: background-color 0.3s ease; /* Smooth hover transition */
+    width: 150px; /* Match the width of the dropdown */
+    text-align: center; /* Center the text */
+}
+
+#userButton:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+/* Style the dropdown content */
+#dropdownContent {
+    display: none; /* Hidden by default */
+    position: absolute;
+    right: 0; /* Align the dropdown directly under the button */
+    background-color: white;
+    min-width: 150px; /* Match the width of the button */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1001;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+/* Style the dropdown links */
+#dropdownContent a {
+    color: black;
+    text-decoration: none;
+    display: block;
+    padding: 10px; /* Match the padding of the button */
+    font-size: 14px; /* Match the font size of the button */
+    text-align: center; /* Center the text */
+}
+
+#dropdownContent a:hover {
+    background-color: #f1f1f1; /* Light gray on hover */
+}
+
+/* Show the dropdown content on hover */
+#userDropdown:hover #dropdownContent {
+    display: block;
+}
+
+/* Style the main content to align the table to the top-left corner */
+#mainContent {
+    margin: 0; /* Remove any default margins */
+    padding: 20px; /* Add padding inside the main content */
+    position: absolute; /* Position the content absolutely */
+    top: 50px; /* Adjust to be directly below the top bar */
+    left: 220px; /* Align to the right of the side menu */
+    width: calc(100% - 220px); /* Ensure it doesn't overlap with the side menu */
+    margin-left: 10px; /* Move the entire main content slightly to the left */
+}
+
+/* Style the title inside the main content */
+#mainContent h1 {
+    margin-top: 30px; /* Add a bit more space above the title */
+    margin-bottom: 20px; /* Keep space below the title */
+    font-size: 24px; /* Adjust font size for better visibility */
+    font-weight: bold; /* Make the title bold */
+    color: #333; /* Use a darker color for better readability */
+}
+
+h1 {
+    margin-top: 50px; /* Adjust this value to move the title down */
+    font-size: 24px; /* Keep the font size consistent */
+    text-align: left; /* Ensure proper alignment */
+}
+
+/* Style the notification bar */
+#notificationBar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #f8d7da; /* Light red background */
+    color: #721c24; /* Dark red text */
+    padding: 10px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    border-bottom: 1px solid #f5c6cb; /* Slightly darker red border */
+    z-index: 1000;
+}
+
+/* Style the notification bar inside the login page */
+#notificationBar {
+    background-color: #f8d7da; /* Light red background */
+    color: #721c24; /* Dark red text */
+    padding: 10px;
+    text-align: center; /* Center the text */
+    font-size: 14px;
+    font-weight: bold;
+    border: 1px solid #f5c6cb; /* Slightly darker red border */
+    border-radius: 5px;
+    margin-bottom: 15px; /* Add spacing below the notification bar */
+    display: none; /* Hidden by default */
+    width: 100%; /* Match the width of the login container */
+    box-sizing: border-box; /* Include padding and border in width */
+}
+
+/* Style the side menu */
+#sideMenu {
+    position: fixed;
+    top: 50px; /* Below the top bar */
+    left: 0;
+    width: 200px;
+    height: 100%; /* Full height */
+    background-color: #343a40; /* Dark gray background */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    padding-top: 20px;
+    z-index: 999; /* Ensure it appears above the main content */
+}
+
+/* Style the menu buttons */
+.menuButton {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    text-align: left;
+    background-color: #495057; /* Slightly lighter dark gray */
+    color: white;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    outline: none;
+    border-bottom: 1px solid #6c757d; /* Divider between buttons */
+    transition: background-color 0.3s ease;
+}
+
+.menuButton:hover {
+    background-color: #6c757d; /* Lighter gray on hover */
+}
+
+/* Style the table */
+#dataTable {
+    margin: 0 auto; /* Center the table horizontally */
+    width: 90%; /* Adjust the table width as needed */
+    border-collapse: collapse; /* Remove gaps between table cells */
+    margin-top: 20px; /* Add space above the table */
+    font-family: Arial, sans-serif; /* Use a clean font */
+    font-size: 16px; /* Adjust font size */
+    text-align: left; /* Align text to the left */
+    table-layout: fixed; /* Ensure columns have equal width */
+    margin-left: -10px; /* Move the table slightly to the left */
+    width: 95%; /* Ensure the table fits within the viewport */
+}
+
+#dataTable thead th {
+    background-color: #007bff; /* Blue background for the header */
+    color: white; /* White text for the header */
+    padding: 10px; /* Add padding to the header cells */
+    border: 1px solid #ddd; /* Add a border to the header cells */
+    font-weight: bold; /* Make the text bold */
+    text-transform: uppercase; /* Make the text uppercase for emphasis */
+    width: 50%; /* Ensure both columns have equal width */
+}
+
+#dataTable tbody tr {
+    border: 1px solid #ddd; /* Add a border to the rows */
+    transition: background-color 0.3s ease; /* Smooth hover effect */
+}
+
+#dataTable tbody td {
+    position: relative; /* Enable positioning for child elements */
+    padding: 10px; /* Add padding to the cells */
+    border: 1px solid #ddd; /* Add a border to the cells */
+    text-align: left; /* Align text to the left */
+    overflow: hidden; /* Prevent content overflow */
+    text-overflow: ellipsis; /* Add ellipsis for overflowing text */
+    white-space: nowrap; /* Prevent text wrapping */
+}
+
+#dataTable tbody tr:hover {
+    background-color: #f1f1f1; /* Light gray background on hover */
+}
+
+/* Alternate row colors */
+#dataTable tbody tr:nth-child(even) {
+    background-color: #f9f9f9; /* Light gray for even rows */
+}
+
+/* Style the delete icon */
+.delete-icon {
+    width: 20px; /* Set the width of the delete icon */
+    height: 20px; /* Set the height of the delete icon */
+    cursor: pointer; /* Add a pointer cursor */
+    position: absolute; /* Position the icon absolutely within the cell */
+    right: 10px; /* Align the delete icon to the right edge of the cell */
+    top: 50%; /* Vertically center the icon */
+    transform: translateY(-50%); /* Adjust for perfect vertical centering */
+    transition: transform 0.2s ease; /* Add a hover effect */
+}
+
+/* Hover effect for the delete icon */
+.delete-icon:hover {
+    transform: translateY(-50%) scale(1.2); /* Slightly enlarge the icon on hover */
+}
+
+/* Style the edit icon */
+.edit-icon {
+    width: 20px; /* Set the width of the edit icon */
+    height: 20px; /* Set the height of the edit icon */
+    cursor: pointer; /* Add a pointer cursor */
+    position: absolute; /* Position the icon absolutely within the cell */
+    right: 40px; /* Position the edit icon to the left of the delete icon */
+    top: 50.7%; /* Vertically center the icon */
+    transform: translateY(-50%); /* Adjust for perfect vertical centering */
+    transition: transform 0.2s ease; /* Add a hover effect */
+}
+
+/* Add Student Button */
+#addStudentContainer {
+    position: absolute;
+    top: 20px; /* Keep it slightly down from the blue bar */
+    right: 80px; /* Move it further to the left */
+    margin: 0;
+    z-index: 1000; /* Ensure it appears above other elements */
+}
+
+#addStudentButton {
+    padding: 3px 8px;
+    font-size: 12px;
+    height: 30px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    box-sizing: border-box;
+}
+
+#addStudentButton:hover {
+    background-color: #0056b3;
+}
+
+/* Modal Background */
+#addStudentModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+#addStudentModal.hidden {
+    display: none; /* Hide the modal when not active */
+}
+
+/* Modal Content */
+#modalContent {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 400px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    z-index: 1001; /* Ensure it appears above the background */
+    pointer-events: auto; /* Ensure the modal content is interactable */
+}
+
+#modalContent h2 {
+    margin-bottom: 20px;
+}
+
+#modalContent label {
+    display: block;
+    margin: 10px 0 5px;
+    text-align: left;
+}
+
+#modalContent input,
+#modalContent select {
+    width: 90%; /* Reduce the width to fit within the modal */
+    padding: 8px; /* Add padding for better spacing */
+    margin: 0 auto 15px; /* Center the input and add spacing below */
+    border: 1px solid #ddd; /* Add a border */
+    border-radius: 5px; /* Rounded corners */
+    font-size: 14px; /* Adjust font size */
+    display: block; /* Ensure the input spans the full width */
+}
+
+#modalButtons {
+    display: flex;
+    justify-content: space-between;
+}
+
+#modalButtons button {
+    padding: 10px 20px;
+    font-size: 14px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#saveStudentButton {
+    background-color: #28a745;
+    color: white;
+}
+
+#saveStudentButton:hover {
+    background-color: #218838;
+}
+
+#cancelStudentButton {
+    background-color: #dc3545;
+    color: white;
+}
+
+#cancelStudentButton:hover {
+    background-color: #c82333;
+}
+
+/* Remove Blur Effect */
+body.modal-active #mainContent,
+body.modal-active #topBar,
+body.modal-active #sideMenu {
+    filter: none; /* No blur effect */
+    pointer-events: none; /* Disable interactions with background elements */
+}
+
+/* Info Box Modal */
+#infoBoxModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure it appears above other elements */
+    pointer-events: auto; /* Allow interactions with the modal */
+}
+
+#infoBoxModal.hidden {
+    display: none; /* Hide the modal when not active */
+}
+
+#infoBoxContent {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 400px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    z-index: 1001; /* Ensure it appears above the background */
+    position: relative; /* Ensure proper positioning */
+    pointer-events: auto; /* Ensure the modal content is interactable */
+}
+
+#infoBoxContent h2 {
+    margin-bottom: 20px;
+}
+
+#infoBoxContent p {
+    margin: 10px 0;
+    font-size: 16px;
+}
+
+#closeInfoBoxButton {
+    padding: 10px 20px;
+    font-size: 14px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1002; /* Ensure it is above other elements */
+    position: relative; /* Ensure it is positioned within the modal */
+}
+
+#closeInfoBoxButton:hover {
+    background-color: #0056b3;
+}
+
+/* Disable background interactions when modal is active */
+body.modal-active #mainContent,
+body.modal-active #topBar,
+body.modal-active #sideMenu {
+    pointer-events: none; /* Disable interactions with background elements */
+}
+
+/* Edit Student Modal */
+#editStudentModal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    display: none; /* Hidden by default */
+}
+
+/* Filter Container */
+#filterContainer {
+    display: inline-block;
+    margin-right: 20px; /* Increase the spacing to move it further left */
+    margin: 0;
+}
+
+.filter-dropdown {
+    font-size: 12px; /* Make the text smaller */
+    padding: 5px; /* Add some padding for better usability */
+    border: 1px solid #ccc; /* Add a light border */
+    border-radius: 5px; /* Round the corners */
+    cursor: pointer; /* Add a pointer cursor */
+    height: 30px; /* Set a consistent height */
+    width: 120px; /* Set a small width */
+}
+
+.filter-icon {
+    appearance: none; /* Remove default dropdown styling */
+    background: url('filter_white.png') no-repeat center center; /* Use the filter icon as the background */
+    background-size: 20px 20px; /* Adjust the size of the icon */
+    border: none; /* Remove the border */
+    width: 40px; /* Set the width of the dropdown */
+    height: 40px; /* Set the height of the dropdown */
+    cursor: pointer; /* Add a pointer cursor */
+    text-indent: -9999px; /* Hide the text inside the dropdown */
+    overflow: hidden; /* Prevent text from being visible */
+}
+
+.filter-icon:hover {
+    background: url('filter_black.png') no-repeat center center; /* Change to black icon on hover */
+    background-size: 20px 20px; /* Ensure the size remains consistent */
+}
+
+.filter-icon option {
+    background: white; /* Ensure dropdown options have a white background */
+    color: black; /* Set the text color for dropdown options */
+    text-indent: 0; /* Reset text indentation for dropdown options */
+}
+
+#filterButton {
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+#filterButton:hover {
+    transform: scale(1.1); /* Slightly enlarge the icon on hover */
+}
+
+#filterDropdown {
+    padding: 5px;
+    font-size: 14px;
+    height: 30px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Action Container */
+#actionContainer {
+    display: flex;
+    justify-content: flex-end; /* Align items to the right */
+    align-items: center; /* Align items vertically */
+    margin-top: -40px; /* Move the container higher */
+    gap: 10px; /* Add spacing between the dropdown and button */
+}
+
+/* Align the filter, search, and add student container with the table */
+#filterAndAddContainer {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Add spacing between the elements */
+    justify-content: flex-end; /* Align the elements to the right (end of the table) */
+    width: fit-content; /* Ensure the container only takes up the necessary width */
+    margin-left: auto; /* Push the container to the right */
+    margin-right: 0; /* Align it with the table's right edge */
+    position: relative; /* Ensure proper positioning */
+    transform: translateX(-20px); /* Move the container 20px to the left */
+}
+
+/* Ensure the dropdown, search, and button align properly */
+#filterDropdown,
+#searchBar,
+#addStudentButton {
+    flex-shrink: 0; /* Prevent elements from shrinking */
+}
+
+/* Move the filter, search, and add student container further to the left */
+#filterAndAddContainer {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Add spacing between the elements */
+    justify-content: flex-end; /* Align the elements to the right (end of the table) */
+    width: fit-content; /* Ensure the container only takes up the necessary width */
+    margin-left: auto; /* Push the container to the right */
+    margin-right: 0; /* Align it with the table's right edge */
+    position: relative; /* Ensure proper positioning */
+    transform: translateX(-93px); /* Move the container 20px to the left */
+}
+
+/* Ensure the dropdown, search, and button align properly */
+#filterDropdown,
+#searchBar,
+#addStudentButton {
+    flex-shrink: 0; /* Prevent elements from shrinking */
+}
+
+/* Search Bar */
+#searchBar {
+    padding: 5px;
+    font-size: 14px;
+    height: 30px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    width: 200px; /* Set a fixed width for the search bar */
+}
+
+.hidden {
+    display: none;
+}
+
+/* Style specifically for tables in signingin.html */
+.signingTable {
+    width: 100%; /* Make the table take up the full width of the container */
+    border-collapse: collapse; /* Remove gaps between table cells */
+    font-family: Arial, sans-serif; /* Use a clean font */
+    font-size: 16px; /* Adjust font size */
+    text-align: left; /* Align text to the left */
+}
+
+.signingTable thead th {
+    background-color: #007bff; /* Blue background for the header */
+    color: white; /* White text for the header */
+    padding: 10px; /* Add padding to the header cells */
+    border: 1px solid #ddd; /* Add a border to the header cells */
+    font-weight: bold; /* Make the text bold */
+    text-transform: uppercase; /* Make the text uppercase for emphasis */
+}
+
+.signingTable tbody td {
+    padding: 10px; /* Add padding to the cells */
+    border: 1px solid #ddd; /* Add a border to the cells */
+    text-align: left; /* Align text to the left */
+}
+
+.signingTable tbody tr:nth-child(even) {
+    background-color: #f9f9f9; /* Light gray for even rows */
+}
+
+.signingTable tbody tr:hover {
+    background-color: #f1f1f1; /* Light gray background on hover */
+}
+
+/* Style specifically for signingin.html */
+#signinginPage #mainContent {
+    padding: 20px;
+}
+
+/* Style for the table container (scrollable box) */
+.tableContainer {
+    max-height: 400px; /* Set the maximum height of the box */
+    overflow-y: auto; /* Enable vertical scrolling */
+    border: 1px solid #ddd; /* Add a border around the box */
+    padding: 10px; /* Add padding inside the box */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+    background-color: #fff; /* Set a white background */
+    margin-bottom: 20px; /* Add spacing below the box */
+}
+
+/* Ensure the tables start from the left */
+#signinginPage .signingTable {
+    width: 90%; /* Adjust table width */
+    margin: 20px 0; /* Add spacing above and below the table */
+    border-collapse: collapse; /* Remove gaps between table cells */
+    font-family: Arial, sans-serif; /* Use a clean font */
+    font-size: 16px; /* Adjust font size */
+    text-align: left; /* Align text to the left */
+}
+
+/* Header styling for the tables */
+#signinginPage .signingTable thead th {
+    background-color: #007bff; /* Blue background for the header */
+    color: white; /* White text for the header */
+    padding: 10px; /* Add padding to the header cells */
+    border: 1px solid #ddd; /* Add a border to the header cells */
+    font-weight: bold; /* Make the text bold */
+    text-transform: uppercase; /* Make the text uppercase for emphasis */
+}
+
+/* Row styling for the tables */
+#signinginPage .signingTable tbody tr {
+    border: 1px solid #ddd; /* Add a border to the rows */
+    transition: background-color 0.3s ease; /* Smooth hover effect */
+}
+
+#signinginPage .signingTable tbody td {
+    padding: 10px; /* Add padding to the cells */
+    border: 1px solid #ddd; /* Add a border to the cells */
+    text-align: left; /* Align text to the left */
+    overflow: hidden; /* Prevent content overflow */
+    text-overflow: ellipsis; /* Add ellipsis for overflowing text */
+    white-space: nowrap; /* Prevent text wrapping */
+}
+
+#signinginPage .signingTable tbody tr:hover {
+    background-color: #f1f1f1; /* Light gray background on hover */
+}
+
+/* Alternate row colors */
+#signinginPage .signingTable tbody tr:nth-child(even) {
+    background-color: #f9f9f9; /* Light gray for even rows */
+}
+
+/* Style for the Sign In header container */
+#signInHeader {
+    display: flex; /* Align items horizontally */
+    justify-content: space-between; /* Title left, controls right */
+    align-items: center;
+    margin-bottom: 10px; /* Add spacing below the header */
+    width: 90%; /* Match the table width */
+}
+
+#signInHeaderRight {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Reduce space between button and calendar */
+    position: relative;
+}
+
+/* Download button styling */
+#downloadExcelBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+    width: 28px;
+    height: 28px;
+    margin-top: 6px; /* Move button down */
+}
+
+#downloadExcelBtn img {
+    width: 20px;
+    height: 20px;
+    transition: filter 0.2s, transform 0.2s;
+}
+
+/* Hover effect for the button */
+#downloadExcelBtn:hover {
+    transform: scale(1.12);
+    box-shadow: 0 2px 8px rgba(0,123,255,0.15);
+}
+
+#downloadExcelBtn:hover img {
+    filter: brightness(1.2) drop-shadow(0 0 4px #007bff);
+    transform: scale(1.15);
+}
+
+/* Upload button styling */
+#uploadExcelBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+    width: 28px;
+    height: 28px;
+    margin-top: 6px; /* Match download button if needed */
+}
+
+#uploadExcelBtn img {
+    width: 20px;
+    height: 20px;
+    transition: filter 0.2s, transform 0.2s;
+}
+
+#uploadExcelBtn:hover {
+    transform: scale(1.12);
+    box-shadow: 0 2px 8px rgba(0,123,255,0.15);
+}
+
+#uploadExcelBtn:hover img {
+    filter: brightness(1.2) drop-shadow(0 0 4px #007bff);
+    transform: scale(1.15);
+}
+
+/* Calendar container next to button, not absolutely positioned */
+#calendarContainer {
+    position: static;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 4px;
+    border-radius: 5px;
+}
+
+#calendarContainer label {
+    margin-bottom: 0;
+    margin-right: 4px;
+    margin-top: 6px; /* Move label down */
+    align-items: center;
+    display: inline-block;
+    vertical-align: middle;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+#calendarContainer input[type="date"] {
+    height: 24px;
+    font-size: 13px;
+    padding: 1px 4px;
+    margin-top: 6px; /* Move input down */
+    box-sizing: border-box;
+    vertical-align: middle;
+}
+
+/* Guest Form Styling - visually matches the sign in/sign out form */
+#guestFormContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+    width: 100%;
+    background: none;
+    position: relative;
+    z-index: 10;
+}
+
+#guestFormContainer .formContainer {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.10);
+    padding: 30px 32px 24px 32px;
+    max-width: 350px;
+    margin: 30px auto;
+    text-align: center;
+    width: 100%;
+}
+
+#guestFormContainer .formContainer img {
+    display: block;
+    margin: 0 auto 18px auto;
+    max-width: 100px;
+    height: auto;
+}
+
+#guestFormContainer label {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: center;
+    display: block;
+}
+
+#guestFormContainer select,
+#guestFormContainer input[type="text"] {
+    width: 90%;
+    padding: 10px;
+    margin: 10px 0 18px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 15px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+#guestFormContainer input[type="text"]::placeholder {
+    text-align: center;
+}
+
+#guestFormContainer .primaryBtn {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 22px;
+    margin: 0 auto 8px auto;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: block;
+    width: 80%;
+}
+
+#guestFormContainer .primaryBtn:hover {
+    background-color: #0056b3;
+}
+
+#guestFormContainer .secondaryBtn {
+    background-color: #f4f4f4;
+    color: #333;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px 22px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: block;
+    width: 80%;
+    margin: 12px auto 0 auto;
+}
+#guestFormContainer .secondaryBtn:hover {
+    background-color: #e2e2e2;
+}
