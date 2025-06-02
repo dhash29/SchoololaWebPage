@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .formField {
+            width: 100%;
+            max-width: 280px; 
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            background: #f9f9f9;
+            color: #333;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <div id="topBar">
+        <span id="pageTitle">Schoolola Admin Page</span>
+        <div id="userDropdown">
+            <button id="userButton">Tarneit ▼</button>
+            <div id="dropdownContent">
+                <a href="#" onclick="logout()">Log Out</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Side Menu -->
+    <div id="sideMenu">
+        <button class="menuButton" onclick="goToDashboard()">Dashboard</button>
+        <button class="menuButton" onclick="goToSignInSignOut()">Students</button>
+        <button class="menuButton" onclick="goToSignIn()">Sign In/Sign Out</button>
+        <button class="menuButton" onclick="goToClasses()">Classes</button>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent">
+        <!-- Add Class Button (now above the classes list) -->
+        <button id="addClassBtn" style="margin: 40px 0 32px 0; background:#007bff; color:#fff; border:none; border-radius:6px; padding:10px 22px; font-size:16px; font-weight:600; display:block;">Add Class</button>
+
+        <!-- Classes List -->
+        <div id="classesListContainer" style="margin-top:0;">
+            <h2 style="color:#007bff;">All Classes</h2>
+            <div id="classesButtons" style="display:flex; flex-wrap:wrap; gap:14px;"></div>
+        </div>
+
+        <!-- Add Class Form Modal (hidden by default) -->
+        <div id="addClassFormContainer" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.25); z-index:1000; align-items:center; justify-content:center;">
+            <form id="addClassForm" style="
+                background: #fff;
+                padding: 32px 32px 24px 32px;
+                border-radius: 12px;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+                min-width: 280px;
+                max-width: 95vw;
+                margin: auto;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            ">
+                <h2 style="margin-top:0; color:#007bff; margin-bottom: 18px;">Add Class</h2>
+                <div style="width:100%; margin-bottom: 16px;">
+                    <label style="display:block; text-align:left; margin-bottom:6px; font-weight:600;">Grade</label>
+                    <select id="classGrade" required class="formField">
+                        <option value="" selected disabled>Select Grade</option>
+                        <option value="Prep">Prep</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                    </select>
+                </div>
+                <div style="width:100%; margin-bottom: 16px;">
+                    <label style="display:block; text-align:left; margin-bottom:6px; font-weight:600;">Day</label>
+                    <select id="classDay" required class="formField">
+                        <option value="" selected disabled>Select Day</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                    </select>
+                </div>
+                <div style="width:100%; margin-bottom: 16px;">
+                    <label style="display:block; text-align:left; margin-bottom:6px; font-weight:600;">Start Time</label>
+                    <!-- Change the time input style to match the selects exactly -->
+                    <input type="time" id="classStartTime" required class="formField">
+                </div>
+                <div style="width:100%; margin-bottom: 16px;">
+                    <label style="display:block; text-align:left; margin-bottom:6px; font-weight:600;">End Time</label>
+                    <input type="time" id="classEndTime" required class="formField">
+                </div>
+                <button type="submit" style="background:#007bff; color:#fff; border:none; border-radius:5px; padding:10px 22px; font-size:16px; font-weight:600; width:100%; margin-bottom:8px;">Submit</button>
+                <button type="button" id="cancelAddClassBtn" style="background:#6c757d; color:#fff; border:none; border-radius:5px; padding:10px 22px; font-size:16px; width:100%;">Cancel</button>
+                <div id="addClassError" style="color:#d32f2f; margin-top:10px; display:none; text-align:center;"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase SDK Scripts -->
+    <script type="module">
+        // Redirect to login.html if the user is not logged in
+        if (!sessionStorage.getItem("isLoggedIn")) {
+            window.location.href = "login.html";
+        }
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
+        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBBzeRD9aIT7PSI3-JI-2jeyrcqLL6csh4",
+            authDomain: "schoololatest.firebaseapp.com",
+            databaseURL: "https://schoololatest-default-rtdb.firebaseio.com",
+            projectId: "schoololatest",
+            storageBucket: "schoololatest.appspot.com",
+            messagingSenderId: "359042307109",
+            appId: "1:359042307109:web:cd0d43223f1fc588bbdbcc",
+            measurementId: "G-V11YZN2F1Y"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth();
+
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                console.log("Authenticated as:", user.email || user.uid);
+            } else {
+                console.log("NOT authenticated!");
+            }
+        });
+
+        window.logout = () => {
+            sessionStorage.removeItem("isLoggedIn"); // Clear the login session
+            window.location.href = "index.html"; // Redirect to the index page
+        };
+
+        window.goToDashboard = () => window.location.href = "admin.html";
+        window.goToSignIn = () => window.location.href = "signingin.html";
+        window.goToSignInSignOut = () => window.location.href = "students.html";
+        window.goToClasses = () => window.location.href = "classes.html";
+
+        // Add Class functionality
+        document.getElementById('addClassBtn').addEventListener('click', () => {
+            document.getElementById('addClassFormContainer').style.display = 'flex';
+        });
+
+        document.getElementById('cancelAddClassBtn').addEventListener('click', () => {
+            document.getElementById('addClassFormContainer').style.display = 'none';
+        });
+
+        // Save class to database and update table
+        document.getElementById('addClassForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const grade = document.getElementById('classGrade').value;
+            const day = document.getElementById('classDay').value;
+            const startTime = document.getElementById('classStartTime').value;
+            const endTime = document.getElementById('classEndTime').value;
+
+            if (!grade || !day || !startTime || !endTime) {
+                document.getElementById('addClassError').innerText = 'Please fill in all fields.';
+                document.getElementById('addClassError').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('addClassError').style.display = 'none';
+
+            // Save to Firebase under /classes/
+            try {
+                await push(ref(db, 'classes'), {
+                    grade,
+                    day,
+                    startTime,
+                    endTime
+                });
+                document.getElementById('addClassFormContainer').style.display = 'none';
+                document.getElementById('addClassForm').reset();
+                alert('Class added successfully!');
+            } catch (err) {
+                document.getElementById('addClassError').innerText = 'Failed to add class. Please try again.';
+                document.getElementById('addClassError').style.display = 'block';
+            }
+        });
+
+        // Load and display all classes
+        function loadClasses() {
+            const container = document.getElementById('classesListContainer');
+            // Remove everything except the heading
+            container.innerHTML = `<h2 style="color:#007bff;">All Classes</h2><div id="classesButtons" style="display:flex; flex-wrap:wrap; gap:14px;"></div>`;
+            const buttonsDiv = document.getElementById('classesButtons');
+            onValue(ref(db, 'classes'), (snapshot) => {
+                buttonsDiv.innerHTML = '';
+                if (snapshot.exists()) {
+                    snapshot.forEach(child => {
+                        const c = child.val();
+                        const classId = child.key;
+                        // Create a card-like button for each class
+                        const btn = document.createElement('div');
+                        btn.style.background = '#fff';
+                        btn.style.border = '2px solid #007bff';
+                        btn.style.color = '#222';
+                        btn.style.borderRadius = '14px';
+                        btn.style.padding = '18px 28px';
+                        btn.style.fontSize = '17px';
+                        btn.style.fontWeight = '500';
+                        btn.style.margin = '0';
+                        btn.style.cursor = 'pointer';
+                        btn.style.display = 'flex';
+                        btn.style.flexDirection = 'column';
+                        btn.style.alignItems = 'flex-start';
+                        btn.style.boxShadow = '0 2px 10px rgba(0,0,0,0.07)';
+                        btn.style.transition = 'box-shadow 0.2s, border-color 0.2s';
+                        btn.onmouseenter = () => {
+                            btn.style.boxShadow = '0 4px 18px rgba(0,123,255,0.13)';
+                            btn.style.borderColor = '#0056b3';
+                        };
+                        btn.onmouseleave = () => {
+                            btn.style.boxShadow = '0 2px 10px rgba(0,0,0,0.07)';
+                            btn.style.borderColor = '#007bff';
+                        };
+                        btn.innerHTML = `
+                            <span style="font-size:20px; font-weight:700;">Grade: ${c.grade}</span>
+                            <span style="margin-top:2px;">Day: <b>${c.day}</b></span>
+                            <span style="margin-top:2px;">Start: <b>${c.startTime}</b></span>
+                            <span style="margin-top:2px;">End: <b>${c.endTime}</b></span>
+                        `;
+                        btn.onclick = () => {
+                            // Redirect to add students page for this class
+                            window.location.href = `class_students.html?classId=${classId}`;
+                        };
+                        buttonsDiv.appendChild(btn);
+                    });
+                } else {
+                    buttonsDiv.innerHTML = '<span style="color:#888;">No classes found.</span>';
+                }
+            });
+        }
+
+        loadClasses();
+    </script>
+</body>
+</html>
