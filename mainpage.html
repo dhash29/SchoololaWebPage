@@ -68,20 +68,29 @@ function showSecondDropdown() {
         .then(snapshot => {
             namesDropdown.innerHTML = '<option value="placeholder" selected disabled>Select your name</option>';
             if (snapshot.exists()) {
-                const names = snapshot.val();
+                let names = snapshot.val();
 
-                // Check each name's status in Firebase
-                const promises = names.map(entry => {
-                    const userStatusRef = ref(database, `records/${grade}/${entry.name}/status`);
-                    return get(userStatusRef).then(statusSnapshot => {
-                        const status = statusSnapshot.val();
-                        return { name: entry.name, status: status };
-                    });
-                });
+                // Convert object to array if needed
+                if (!Array.isArray(names)) {
+                    names = Object.values(names);
+                }
+
+                // Now names is always an array of either {name: "X"} or just "X"
+                const promises = names
+    .filter(entry => entry && (typeof entry === "string" || entry.name)) // skip null/empty
+    .map(entry => {
+        const studentName = typeof entry === "string" ? entry : entry.name;
+        const userStatusRef = ref(database, `records/${grade}/${studentName}/status`);
+        return get(userStatusRef).then(statusSnapshot => {
+            const status = statusSnapshot.val();
+            return { name: studentName, status: status };
+        });
+    });
 
                 // Wait for all status checks to complete
                 Promise.all(promises).then(results => {
                     results.forEach(({ name, status }) => {
+//                        console.log("Name:", name, "Status:", status, "Action:", actionType);
                         if (actionType === "Sign In" && status !== "Signed In") {
                             // Add names that are not signed in to the "Sign In" dropdown
                             const option = document.createElement("option");
