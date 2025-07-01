@@ -611,7 +611,7 @@ body.modal-active #sideMenu {
 #closeInfoBoxButton {
     padding: 10px 20px;
     font-size: 14px;
-    background-color: #007bff;
+    background-color: #b70606;
     color: white;
     border: none;
     border-radius: 5px;
@@ -621,7 +621,7 @@ body.modal-active #sideMenu {
 }
 
 #closeInfoBoxButton:hover {
-    background-color: #0056b3;
+    background-color: #590101;
 }
 
 /* Disable background interactions when modal is active */
