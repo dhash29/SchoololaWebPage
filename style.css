@@ -207,7 +207,7 @@ button:hover {
 
 /* Style the top navigation bar */
 #topBar {
-    background-color: #007bff; /* Blue background */
+    background-color: #a00000; /* Blue background */
     color: white; /* White text */
     padding: 10px 20px;
     display: flex;
@@ -236,7 +236,7 @@ button:hover {
 
 /* Style the dropdown button */
 #userButton {
-    background-color: #007bff;
+    background-color: #a00000;
     color: white;
     border: none;
     border-radius: 5px;
@@ -249,7 +249,7 @@ button:hover {
 }
 
 #userButton:hover {
-    background-color: #0056b3; /* Darker blue on hover */
+    background-color: #6d0000; /* Darker blue on hover */
 }
 
 /* Style the dropdown content */
@@ -390,7 +390,7 @@ h1 {
 }
 
 #dataTable thead th {
-    background-color: #007bff; /* Blue background for the header */
+    background-color: #1b1b1b; /* Blue background for the header */
     color: white; /* White text for the header */
     padding: 10px; /* Add padding to the header cells */
     border: 1px solid #ddd; /* Add a border to the header cells */
@@ -465,7 +465,7 @@ h1 {
     padding: 3px 8px;
     font-size: 12px;
     height: 30px;
-    background-color: #007bff;
+    background-color: #a00000;
     color: white;
     border: none;
     border-radius: 5px;
@@ -475,7 +475,7 @@ h1 {
 }
 
 #addStudentButton:hover {
-    background-color: #0056b3;
+    background-color: #620202;
 }
 
 /* Modal Background */
@@ -783,7 +783,7 @@ body.modal-active #sideMenu {
 }
 
 .signingTable thead th {
-    background-color: #007bff; /* Blue background for the header */
+    background-color: #151515; /* Blue background for the header */
     color: white; /* White text for the header */
     padding: 10px; /* Add padding to the header cells */
     border: 1px solid #ddd; /* Add a border to the header cells */
@@ -833,7 +833,7 @@ body.modal-active #sideMenu {
 
 /* Header styling for the tables */
 #signinginPage .signingTable thead th {
-    background-color: #007bff; /* Blue background for the header */
+    background-color: #151515; /* Blue background for the header */
     color: white; /* White text for the header */
     padding: 10px; /* Add padding to the header cells */
     border: 1px solid #ddd; /* Add a border to the header cells */
@@ -879,6 +879,7 @@ body.modal-active #sideMenu {
     align-items: center;
     gap: 8px; /* Reduce space between button and calendar */
     position: relative;
+    top: 10.5px;
 }
 
 /* Download button styling */
