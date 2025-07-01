@@ -16,9 +16,28 @@
             color: #333;
             box-sizing: border-box;
         }
+        #closeClassModalBtn {
+            position: absolute;
+            top: 12px;
+            right: 24px;
+            background: none;
+            border: none;
+            font-size: 2.2rem;
+            color: #bbb;
+            cursor: pointer;
+            transition: color 0.2s;
+            z-index: 2;
+            padding: 0;
+            line-height: 1;
+            width: auto;
+            height: auto;
+        }
+        #closeClassModalBtn:hover {
+            color: #a00000;
+        }
     </style>
 </head>
-<body>
+<body style="position: relative; padding-top: 48px;"> <!-- Added padding-top here -->
     <!-- Top Navigation Bar -->
     <div id="topBar">
         <span id="pageTitle">Schoolola Admin Page</span>
@@ -39,13 +58,13 @@
     </div>
 
     <!-- Main Content -->
-    <div id="mainContent">
+    <div id="mainContent">    
         <!-- Add Class Button (now above the classes list) -->
-        <button id="addClassBtn" style="margin: 40px 0 32px 0; background:#007bff; color:#fff; border:none; border-radius:6px; padding:10px 22px; font-size:16px; font-weight:600; display:block;">Add Class</button>
+        <button id="addClassBtn" style="margin: 40px 0 32px 0; background:#a00000; color:#fff; border:none; border-radius:6px; padding:10px 22px; font-size:16px; font-weight:600; display:block;">Add Class</button>
 
         <!-- Classes List -->
         <div id="classesListContainer" style="margin-top:0;">
-            <h2 style="color:#007bff;">All Classes</h2>
+            <h2 style="color:#191919;">All Classes</h2>
             <div id="classesButtons" style="display:flex; flex-wrap:wrap; gap:14px;"></div>
         </div>
 
@@ -101,6 +120,54 @@
                 <button type="button" id="cancelAddClassBtn" style="background:#6c757d; color:#fff; border:none; border-radius:5px; padding:10px 22px; font-size:16px; width:100%;">Cancel</button>
                 <div id="addClassError" style="color:#d32f2f; margin-top:10px; display:none; text-align:center;"></div>
             </form>
+        </div>
+
+        <!-- Class Modal (hidden by default) -->
+        <div id="classModal" style="
+            display:none; 
+            position:fixed; 
+            top:0; left:0; 
+            width:100vw; height:100vh; 
+            background:rgba(0,0,0,0.32); 
+            z-index:2000; 
+            align-items:center; 
+            justify-content:center;
+        ">
+            <div id="classModalContent" style="
+                background:#fff;
+                padding:48px 40px 32px 40px;
+                border-radius:22px;
+                box-shadow:0 12px 40px rgba(0,0,0,0.20);
+                min-width:380px;
+                max-width:96vw;
+                margin:auto;
+                display:flex;
+                flex-direction:column;
+                align-items:center;
+                position:relative;
+                transition: box-shadow 0.2s;
+                gap: 0.5rem;
+            ">
+                <!-- Close button for the modal -->
+                <button id="closeClassModalBtn">&times;</button>
+                
+                <h2 id="modalClassTitle" style="margin:32px 0 10px 0; color:#151515; font-size:2.1rem; font-weight:700;">Class Details</h2>
+                <div id="modalClassInfo" style="margin-bottom:18px; text-align:left; width:100%; font-size:1.15rem; background:#f6f8fa; border-radius:10px; padding:14px 18px;"></div>
+                <button id="assignStudentsBtn" style="background:#a00000; color:#fff; border:none; border-radius:8px; padding:13px 0; font-size:17px; font-weight:600; width:100%; margin-bottom:18px; transition:background 0.2s;">Assign Students</button>
+                <div id="assignStudentsSection" style="display:none; width:100%; margin-bottom:14px;">
+                    <label style="font-weight:600; margin-bottom:8px; display:block;">Select Student:</label>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <select id="studentSelect" class="formField" style="margin-bottom:0;">
+                            <option value="" selected disabled>Select student</option>
+                        </select>
+                        <button id="addStudentToClassBtn" style="background:#28a745; color:#fff; border:none; border-radius:5px; padding:10px 22px; font-size:16px; font-weight:600;">Add</button>
+                    </div>
+                </div>
+                <div style="width:100%; margin-top:16px;">
+                    <label style="font-weight:600;">Assigned Students:</label>
+                    <ul id="assignedStudentsList" style="list-style:none; padding:0; margin:0; min-height:32px;"></ul>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -191,11 +258,113 @@
             }
         });
 
+        // Class Modal logic
+        const classModal = document.getElementById('classModal');
+        const modalClassTitle = document.getElementById('modalClassTitle');
+        const modalClassInfo = document.getElementById('modalClassInfo');
+        const assignStudentsBtn = document.getElementById('assignStudentsBtn');
+        const assignStudentsSection = document.getElementById('assignStudentsSection');
+        const studentSelect = document.getElementById('studentSelect');
+        const addStudentToClassBtn = document.getElementById('addStudentToClassBtn');
+        const assignedStudentsList = document.getElementById('assignedStudentsList');
+        const closeClassModalBtn = document.getElementById('closeClassModalBtn');
+        if (closeClassModalBtn) {
+            closeClassModalBtn.onclick = () => {
+                document.getElementById('classModal').style.display = 'none';
+            };
+        }
+
+        let currentClassId = null;
+        let currentClassData = null;
+
+        // Show modal for a class
+        function openClassModal(classId, classData) {
+            currentClassId = classId;
+            currentClassData = classData;
+            modalClassTitle.textContent = `Grade: ${classData.grade}`;
+            modalClassInfo.innerHTML = `
+                <div><b>Day:</b> ${classData.day}</div>
+                <div><b>Start:</b> ${classData.startTime}</div>
+                <div><b>End:</b> ${classData.endTime}</div>
+            `;
+            assignStudentsSection.style.display = "none";
+            classModal.style.display = "flex";
+            loadAssignedStudents();
+        }
+        
+
+        // Show assign students section and load students in same grade
+        assignStudentsBtn.onclick = () => {
+            assignStudentsSection.style.display = "block";
+            loadGradeStudents(currentClassData.grade);
+        };
+
+        // Load all students in the same grade and populate the select
+        function loadGradeStudents(grade) {
+            studentSelect.innerHTML = '<option value="" selected disabled>Loading...</option>';
+            import('https://www.gstatic.com/firebasejs/11.7.1/firebase-database.js').then(({ get, child, ref }) => {
+                get(child(ref(db), `grades/${grade}/names`)).then(snapshot => {
+                    studentSelect.innerHTML = '<option value="" selected disabled>Select student</option>';
+                    if (snapshot.exists()) {
+                        let names = snapshot.val();
+                        if (!Array.isArray(names)) names = Object.values(names);
+                        names.forEach(entry => {
+                            const name = typeof entry === "string" ? entry : entry.name;
+                            if (name) {
+                                const option = document.createElement("option");
+                                option.value = name;
+                                option.textContent = name;
+                                studentSelect.appendChild(option);
+                            }
+                        });
+                    } else {
+                        studentSelect.innerHTML = '<option value="" disabled>No students found</option>';
+                    }
+                });
+            });
+        }
+
+        // Add student to class in Firebase
+        addStudentToClassBtn.onclick = async () => {
+            const name = studentSelect.value;
+            if (!name) return;
+            // Prevent duplicate assignment
+            const studentsRef = ref(db, `classes/${currentClassId}/students`);
+            let alreadyAssigned = false;
+            await onValue(studentsRef, (snapshot) => {
+                snapshot.forEach(child => {
+                    if (child.val() === name) alreadyAssigned = true;
+                });
+            }, { onlyOnce: true });
+            if (alreadyAssigned) {
+                alert("Student already assigned to this class.");
+                return;
+            }
+            await push(studentsRef, name);
+            studentSelect.value = "";
+            loadAssignedStudents();
+        };
+
+        // Load assigned students from Firebase
+        function loadAssignedStudents() {
+            assignedStudentsList.innerHTML = '<li style="color:#888;">Loading...</li>';
+            const studentsRef = ref(db, `classes/${currentClassId}/students`);
+            onValue(studentsRef, (snapshot) => {
+                assignedStudentsList.innerHTML = '';
+                if (snapshot.exists()) {
+                    snapshot.forEach(child => {
+                        const li = document.createElement('li');
+                        li.textContent = child.val();
+                        assignedStudentsList.appendChild(li);
+                    });
+                } else {
+                    assignedStudentsList.innerHTML = '<li style="color:#888;">No students assigned.</li>';
+                }
+            }, { onlyOnce: true });
+        }
+
         // Load and display all classes
         function loadClasses() {
-            const container = document.getElementById('classesListContainer');
-            // Remove everything except the heading
-            container.innerHTML = `<h2 style="color:#007bff;">All Classes</h2><div id="classesButtons" style="display:flex; flex-wrap:wrap; gap:14px;"></div>`;
             const buttonsDiv = document.getElementById('classesButtons');
             onValue(ref(db, 'classes'), (snapshot) => {
                 buttonsDiv.innerHTML = '';
@@ -203,10 +372,9 @@
                     snapshot.forEach(child => {
                         const c = child.val();
                         const classId = child.key;
-                        // Create a card-like button for each class
                         const btn = document.createElement('div');
                         btn.style.background = '#fff';
-                        btn.style.border = '2px solid #007bff';
+                        btn.style.border = '2px solid #a00000'; // changed from #007bff (blue) to #a00000 (red)
                         btn.style.color = '#222';
                         btn.style.borderRadius = '14px';
                         btn.style.padding = '18px 28px';
@@ -220,12 +388,12 @@
                         btn.style.boxShadow = '0 2px 10px rgba(0,0,0,0.07)';
                         btn.style.transition = 'box-shadow 0.2s, border-color 0.2s';
                         btn.onmouseenter = () => {
-                            btn.style.boxShadow = '0 4px 18px rgba(0,123,255,0.13)';
-                            btn.style.borderColor = '#0056b3';
+                            btn.style.boxShadow = '0 4px 18px rgba(160,0,0,0.13)';
+                            btn.style.borderColor = '#7a0000'; // darker red on hover
                         };
                         btn.onmouseleave = () => {
                             btn.style.boxShadow = '0 2px 10px rgba(0,0,0,0.07)';
-                            btn.style.borderColor = '#007bff';
+                            btn.style.borderColor = '#a00000';
                         };
                         btn.innerHTML = `
                             <span style="font-size:20px; font-weight:700;">Grade: ${c.grade}</span>
@@ -233,10 +401,7 @@
                             <span style="margin-top:2px;">Start: <b>${c.startTime}</b></span>
                             <span style="margin-top:2px;">End: <b>${c.endTime}</b></span>
                         `;
-                        btn.onclick = () => {
-                            // Redirect to add students page for this class
-                            window.location.href = `class_students.html?classId=${classId}`;
-                        };
+                        btn.onclick = () => openClassModal(classId, c);
                         buttonsDiv.appendChild(btn);
                     });
                 } else {
