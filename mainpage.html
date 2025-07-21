@@ -423,10 +423,79 @@ function submitGuestForm() {
     });
 }
 
-// Make guest functions available globally for HTML onclick
-window.showGuestForm = showGuestForm;
-window.hideGuestForm = hideGuestForm;
-window.submitGuestForm = submitGuestForm;
+// Logs Button and Popup
+const logsBtn = document.getElementById('logsBtn');
+const logsPopup = document.getElementById('logsPopup');
+const closeLogsBtn = document.getElementById('closeLogsBtn');
+const logsContent = document.getElementById('logsContent');
+const logsBlurOverlay = document.getElementById('logsBlurOverlay');
+
+logsBtn.onclick = () => {
+    logsBlurOverlay.style.display = 'block';
+    logsPopup.style.display = 'block';
+    showLogsForToday();
+};
+closeLogsBtn.onclick = () => {
+    logsPopup.style.display = 'none';
+    logsBlurOverlay.style.display = 'none';
+};
+
+function showLogsForToday() {
+    logsContent.innerHTML = 'Loading...';
+    const today = new Date();
+    const dateStr = today.getFullYear() + "-" +
+        String(today.getMonth() + 1).padStart(2, "0") + "-" +
+        String(today.getDate()).padStart(2, "0");
+
+    // We'll fetch all grades
+    const grades = ["Prep", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"];
+    const db = getDatabase();
+
+    let allLogs = [];
+    let gradesProcessed = 0;
+
+    grades.forEach(grade => {
+        const recordsRef = ref(db, `records/${grade}`);
+        get(recordsRef).then(recordsSnap => {
+            if (recordsSnap.exists()) {
+                const students = recordsSnap.val();
+                Object.entries(students).forEach(([studentName, studentData]) => {
+                    if (studentData.history) {
+                        Object.values(studentData.history).forEach(rec => {
+                            if (rec.date === dateStr) {
+                                allLogs.push({
+                                    name: studentName,
+                                    grade: grade,
+                                    action: rec.action,
+                                    time: rec.time || "",
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+            gradesProcessed++;
+            if (gradesProcessed === grades.length) {
+                // All grades processed, show logs
+                if (allLogs.length === 0) {
+                    logsContent.innerHTML = '<div style="color:#888;">No sign in/out records for today.</div>';
+                } else {
+                    // Sort by time (optional)
+                    allLogs.sort((a, b) => (a.time > b.time ? 1 : -1));
+                    logsContent.innerHTML = allLogs.map(log =>
+                        `<div style="margin-bottom:6px;">
+                            <b>${log.name}</b> (${log.grade}) 
+                            <span style="color:${log.action === 'Sign In' ? '#009900' : '#a00000'}; font-weight:600;">
+                                ${log.action}
+                            </span>
+                            <span style="color:#555;">at ${log.time}</span>
+                        </div>`
+                    ).join('');
+                }
+            }
+        });
+    });
+}
         </script>
         <script>
             // Log the user out when they visit index.html
@@ -557,5 +626,86 @@ window.submitGuestForm = submitGuestForm;
     <button type="button" onclick="hideGuestForm()" class="secondaryBtn">Go Back</button>
   </div>
 </div>
+
+<!-- Logs Button: smaller and bottom left -->
+<button id="logsBtn" style="
+    position: fixed;
+    bottom: 16px;
+    left: 16px;
+    z-index: 2000;
+    background: #fff;
+    color: #a00000;
+    border: 2px solid #a00000;
+    border-radius: 8px;
+    padding: 4px 20px;   /* <--- Increase this for more length */
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    min-width: unset;
+    width: auto;
+">Logs</button>
+
+<!-- Logs Popup: X button in top right -->
+<div id="logsPopup" style="
+    display: none;
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border: 2px solid #a00000;
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    padding: 28px 32px 22px 32px;
+    z-index: 3000;
+    min-width: 320px;
+    max-width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+">
+    <button id="closeLogsBtn" style="
+        position: absolute;
+        top: 10px;
+        right: 14px;
+        width: 28px;
+        height: 28px;
+        background: none;
+        border: none;
+        font-size: 22px;
+        cursor: pointer;
+        color: #a00000;
+        z-index: 10;
+        padding: 0;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    ">&times;</button>
+    <div style="text-align:center; margin-bottom:18px;">
+        <span style="font-size:20px; font-weight:700; color:#a00000;">Today's Logs</span>
+    </div>
+    <div id="logsContent" style="font-size:15px; color:#222;"></div>
+</div>
+
+<!-- Blur Overlay for Logs Popup -->
+<div id="logsBlurOverlay" style="
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.18);
+    backdrop-filter: blur(2.5px);
+    z-index: 2999;
+"></div>
+
+<style>
+#logsBtn:hover {
+    background: #a00000;
+    color: #fff;
+    border-color: #a00000;
+    transition: background 0.15s, color 0.15s;
+}
+</style>
     </body>
 </html>
