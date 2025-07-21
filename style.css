@@ -57,14 +57,14 @@ button {
     height: 50px;
     font-size: 18px;
     color: #fff;
-    background-color: #007bff;
+    background-color: #b40000;
     border: none;
     border-radius: 5px;
     cursor: pointer;
 }
 
 button:hover {
-    background-color: #0056b3;
+    background-color: #760101;
 }
 
 /* Center the action buttons */
@@ -113,7 +113,7 @@ button:hover {
 }
 
 #adminButton {
-    background-color: #007bff;
+    background-color: #000204;
     color: #fff;
     border: none;
     border-radius: 5px;
@@ -124,7 +124,7 @@ button:hover {
 }
 
 #adminButton:hover {
-    background-color: #0056b3;
+    background-color: #252525;
 }
 
 /* Apply blur effect to the Admin Page button */
@@ -173,7 +173,7 @@ button:hover {
 
 /* Style the Admin Login Form buttons */
 #adminLoginForm button {
-    background-color: #007bff;
+    background-color: #b70505;
     color: #fff;
     border: none;
     border-radius: 5px;
@@ -184,7 +184,7 @@ button:hover {
 }
 
 #adminLoginForm button:hover {
-    background-color: #0056b3;
+    background-color: #820303;
 }
 
 /* Style the Close Button */
@@ -1030,7 +1030,7 @@ body.modal-active #sideMenu {
 }
 
 #guestFormContainer .primaryBtn {
-    background-color: #007bff;
+    background-color: #c70505;
     color: #fff;
     border: none;
     border-radius: 5px;
@@ -1044,7 +1044,7 @@ body.modal-active #sideMenu {
 }
 
 #guestFormContainer .primaryBtn:hover {
-    background-color: #0056b3;
+    background-color: #ae0707;
 }
 
 #guestFormContainer .secondaryBtn {
@@ -1062,4 +1062,27 @@ body.modal-active #sideMenu {
 }
 #guestFormContainer .secondaryBtn:hover {
     background-color: #e2e2e2;
+}
+
+/* Make Sign In, Sign Out, and Guest buttons bigger but keep original layout */
+/* filepath: d:\Coding\HTML\Schoolola_Sign_IN\style.css */
+#actionButtons > div > button {
+    font-size: 22px;
+    padding: 18px 38px;
+    min-width: 160px;
+    border-radius: 8px;
+}
+
+/* Ensure Sign In, Sign Out, and Guest button text is perfectly centered */
+/* filepath: d:\Coding\HTML\Schoolola_Sign_IN\style.css */
+#actionButtons > div > button,
+#guestBtn {
+    font-size: 22px;
+    padding: 18px 38px;
+    min-width: 160px;
+    border-radius: 8px;
+    text-align: center;         /* Center text horizontally */
+    vertical-align: middle;     /* Center text vertically (for inline elements) */
+    display: inline-block;      /* Keep original layout, but allow centering */
+    line-height: normal;        /* Reset line height if needed */
 }
