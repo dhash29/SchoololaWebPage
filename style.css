@@ -1086,3 +1086,22 @@ body.modal-active #sideMenu {
     display: inline-block;      /* Keep original layout, but allow centering */
     line-height: normal;        /* Reset line height if needed */
 }
+
+#signOutAllBtn {
+    margin-left: 10px;
+    background-color: #a00000;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 22px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+}
+
+#signOutAllBtn:hover {
+    background-color: #d32f2f;
+    color: #fff;
+}
+
