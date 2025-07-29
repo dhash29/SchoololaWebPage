@@ -21,7 +21,7 @@ window.showGuestForm = showGuestForm;
 window.hideGuestForm = hideGuestForm;
 window.submitGuestForm = submitGuestForm;
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
-import { getDatabase, ref, push, get, child, set } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-database.js";
+import { getDatabase, ref, push, get, child, set, onValue } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-auth.js";
 
 // Firebase configuration
@@ -195,14 +195,11 @@ function submitForm() {
 }
 
 function showForm(actionType) {
+    // For both Sign In and Sign Out, show the normal form
     const formContainer = document.getElementById("formContainer");
     const actionInput = document.getElementById("actionType");
     actionInput.value = actionType; // Set the action type (Sign In or Sign Out)
-
-    // Show the form container
     formContainer.style.display = "block";
-
-    // Hide the action buttons
     document.getElementById("actionButtons").style.display = "none";
 }
 
@@ -424,42 +421,42 @@ function submitGuestForm() {
 }
 
 // Logs Button and Popup
-const logsBtn = document.getElementById('logsBtn');
-const logsPopup = document.getElementById('logsPopup');
-const closeLogsBtn = document.getElementById('closeLogsBtn');
-const logsContent = document.getElementById('logsContent');
-const logsBlurOverlay = document.getElementById('logsBlurOverlay');
-
-logsBtn.onclick = () => {
-    logsBlurOverlay.style.display = 'block';
-    logsPopup.style.display = 'block';
-    showLogsForToday();
-};
-closeLogsBtn.onclick = () => {
-    logsPopup.style.display = 'none';
-    logsBlurOverlay.style.display = 'none';
-};
 
 function showLogsForToday() {
     logsContent.innerHTML = 'Loading...';
+    document.getElementById('signedInList').innerHTML = 'Loading...';
     const today = new Date();
     const dateStr = today.getFullYear() + "-" +
         String(today.getMonth() + 1).padStart(2, "0") + "-" +
         String(today.getDate()).padStart(2, "0");
 
-    // We'll fetch all grades
     const grades = ["Prep", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"];
     const db = getDatabase();
 
+    // Remove previous listeners if any
+    if (window._logsListeners) {
+        window._logsListeners.forEach(unsub => unsub());
+    }
+    window._logsListeners = [];
+
     let allLogs = [];
-    let gradesProcessed = 0;
+    let allSignedIn = [];
 
     grades.forEach(grade => {
         const recordsRef = ref(db, `records/${grade}`);
-        get(recordsRef).then(recordsSnap => {
+        const unsubscribe = onValue(recordsRef, (recordsSnap) => {
+            // Remove previous logs and signed-in for this grade
+            allLogs = allLogs.filter(log => log.grade !== grade);
+            allSignedIn = allSignedIn.filter(s => s.grade !== grade);
+
             if (recordsSnap.exists()) {
                 const students = recordsSnap.val();
                 Object.entries(students).forEach(([studentName, studentData]) => {
+                    // Signed In List
+                    if (studentData.status === "Signed In") {
+                        allSignedIn.push({ name: studentName, grade });
+                    }
+                    // Logs
                     if (studentData.history) {
                         Object.values(studentData.history).forEach(rec => {
                             if (rec.date === dateStr) {
@@ -474,28 +471,80 @@ function showLogsForToday() {
                     }
                 });
             }
-            gradesProcessed++;
-            if (gradesProcessed === grades.length) {
-                // All grades processed, show logs
-                if (allLogs.length === 0) {
-                    logsContent.innerHTML = '<div style="color:#888;">No sign in/out records for today.</div>';
-                } else {
-                    // Sort by time (optional)
-                    allLogs.sort((a, b) => (a.time > b.time ? 1 : -1));
-                    logsContent.innerHTML = allLogs.map(log =>
-                        `<div style="margin-bottom:6px;">
-                            <b>${log.name}</b> (${log.grade}) 
-                            <span style="color:${log.action === 'Sign In' ? '#009900' : '#a00000'}; font-weight:600;">
-                                ${log.action}
-                            </span>
-                            <span style="color:#555;">at ${log.time}</span>
-                        </div>`
-                    ).join('');
-                }
+            // Update Signed In List
+            const signedInList = document.getElementById('signedInList');
+            if (allSignedIn.length === 0) {
+                signedInList.innerHTML = '<div style="color:#888;">None</div>';
+            } else {
+                // Sort alphabetically
+                allSignedIn.sort((a, b) => a.name.localeCompare(b.name));
+                signedInList.innerHTML = allSignedIn.map(s =>
+                    `<div>${s.name}</div>`
+                ).join('');
+            }
+            // Update Logs
+            if (allLogs.length === 0) {
+                logsContent.innerHTML = '<div style="color:#888;">No sign in/out records for today.</div>';
+            } else {
+                allLogs.sort((a, b) => (a.time > b.time ? 1 : -1));
+                logsContent.innerHTML = allLogs.map(log =>
+                    `<div style="margin-bottom:6px;">
+                        <b>${log.name}</b> (${log.grade}) 
+                        <span style="color:${log.action === 'Sign In' ? '#009900' : '#a00000'}; font-weight:600;">
+                            ${log.action}
+                        </span>
+                        <span style="color:#555;">at ${log.time}</span>
+                    </div>`
+                ).join('');
             }
         });
+        window._logsListeners.push(unsubscribe);
     });
 }
+
+function updateSignedInList() {
+    const grades = ["Prep", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"];
+    const db = getDatabase();
+    const signedInListDiv = document.getElementById('signedInList');
+    let allSignedIn = [];
+
+    // Remove previous listeners if any
+    if (window._signedInListeners) {
+        window._signedInListeners.forEach(unsub => unsub());
+    }
+    window._signedInListeners = [];
+
+    grades.forEach(grade => {
+        const recordsRef = ref(db, `records/${grade}`);
+        const unsubscribe = onValue(recordsRef, (recordsSnap) => {
+            // Remove previous signed-in for this grade
+            allSignedIn = allSignedIn.filter(s => s.grade !== grade);
+
+            if (recordsSnap.exists()) {
+                const students = recordsSnap.val();
+                Object.entries(students).forEach(([studentName, studentData]) => {
+                    if (studentData.status === "Signed In") {
+                        allSignedIn.push({ name: studentName, grade });
+                    }
+                });
+            }
+            // Update the sidebar
+            if (allSignedIn.length === 0) {
+                signedInListDiv.innerHTML = '<div style="color:#888;">None</div>';
+            } else {
+                // Sort alphabetically
+                allSignedIn.sort((a, b) => a.name.localeCompare(b.name));
+                signedInListDiv.innerHTML = allSignedIn.map(s =>
+                    `<div>${s.name}</div>`
+                ).join('');
+            }
+        });
+        window._signedInListeners.push(unsubscribe);
+    });
+}
+
+// Call this once on page load
+updateSignedInList();
         </script>
         <script>
             // Log the user out when they visit index.html
@@ -537,13 +586,33 @@ function showLogsForToday() {
         <div id="adminCodeContainer" style="display: none; text-align: center; padding: 20px; background-color: white; border-radius: 10px; width: 300px; margin: auto; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1001;">
             <!-- Error Message -->
             <p id="adminCodeError" style="display: none; color: red; font-weight: bold; margin-bottom: 10px;"></p>
-
             <h3>Enter Admin Code</h3>
             <input type="password" id="adminCode" placeholder="Enter code" style="padding: 10px; width: 80%; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 5px;">
             <br>
             <button type="button" onclick="submitAdminCode()" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">Submit</button>
             <button type="button" onclick="hideAdminCodePrompt()" style="padding: 10px 20px; background-color: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer;">Cancel</button>
         </div>
+
+        <!-- Signed In Sidebar -->
+        <div id="signedInSidebar" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 210px;
+            height: 100vh;
+            background: #fafbfc;
+            border-right: 2px solid #eee;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.04);
+            z-index: 100;
+            padding: 24px 10px 10px 18px;
+            overflow-y: auto;
+        ">
+            <div style="font-weight:700; color:#a00000; margin-bottom:14px; text-align:left; font-size:18px;">
+                Signed In
+            </div>
+            <div id="signedInList" style="font-size:15px; color:#222;"></div>
+        </div>
+        <div style="margin-left:220px;">
 
         <!-- Action Buttons -->
         <div id="actionButtons" style="text-align: center;">
@@ -627,77 +696,13 @@ function showLogsForToday() {
   </div>
 </div>
 
-<!-- Logs Button: smaller and bottom left -->
-<button id="logsBtn" style="
-    position: fixed;
-    bottom: 16px;
-    left: 16px;
-    z-index: 2000;
-    background: #fff;
-    color: #a00000;
-    border: 2px solid #a00000;
-    border-radius: 8px;
-    padding: 4px 20px;   /* <--- Increase this for more length */
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
-    min-width: unset;
-    width: auto;
-">Logs</button>
-
-<!-- Logs Popup: X button in top right -->
-<div id="logsPopup" style="
-    display: none;
-    position: fixed;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    background: #fff;
-    border: 2px solid #a00000;
-    border-radius: 14px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-    padding: 28px 32px 22px 32px;
-    z-index: 3000;
-    min-width: 320px;
-    max-width: 90vw;
-    max-height: 80vh;
-    overflow-y: auto;
-">
-    <button id="closeLogsBtn" style="
-        position: absolute;
-        top: 10px;
-        right: 14px;
-        width: 28px;
-        height: 28px;
-        background: none;
-        border: none;
-        font-size: 22px;
-        cursor: pointer;
-        color: #a00000;
-        z-index: 10;
-        padding: 0;
-        line-height: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    ">&times;</button>
-    <div style="text-align:center; margin-bottom:18px;">
-        <span style="font-size:20px; font-weight:700; color:#a00000;">Today's Logs</span>
-    </div>
-    <div id="logsContent" style="font-size:15px; color:#222;"></div>
+<!-- Sign Out List Container -->
+<div id="signOutListContainer" style="display:none; text-align:center; padding:32px;">
+    <h3>Select your name to sign out</h3>
+    <div id="signOutNamesList" style="margin: 24px 0;"></div>
+    <button id="confirmSignOutBtn" type="button" style="display:none; margin-top:18px; padding:12px 32px; font-size:18px;">Sign Out</button>
+    <button type="button" onclick="hideSignOutList()" style="margin-top:18px; margin-left:12px;">Go Back</button>
 </div>
-
-<!-- Blur Overlay for Logs Popup -->
-<div id="logsBlurOverlay" style="
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    width: 100vw; height: 100vh;
-    background: rgba(0,0,0,0.18);
-    backdrop-filter: blur(2.5px);
-    z-index: 2999;
-"></div>
 
 <style>
 #logsBtn:hover {
@@ -705,6 +710,10 @@ function showLogsForToday() {
     color: #fff;
     border-color: #a00000;
     transition: background 0.15s, color 0.15s;
+}
+
+.signOutNameOption:hover {
+    background: #fff0f0 !important;
 }
 </style>
     </body>
